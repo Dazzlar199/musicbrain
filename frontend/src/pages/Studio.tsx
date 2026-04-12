@@ -675,6 +675,7 @@ export default function Studio() {
           {/* ─── Audio Detail Tab (기존 analysis) ─── */}
           {tab === "analysis" && (
             aState === "loading" ? <Loading title="오디오 분석 중" body="주파수 · 파형 · 에너지 분석을 진행하고 있어요." /> :
+            aState === "error" ? <Empty title="오디오 상세 분석 준비 중" body="이 기능은 현재 준비 중이에요. 히트 분석 탭에서 Gemini 분석을 이용해주세요." /> :
             analysis ? (
               <div className="stack">
                 {/* Market scores bar chart */}
@@ -855,6 +856,7 @@ export default function Studio() {
           {/* ─── Benchmark Tab ─── */}
           {tab === "benchmark" && (
             bState === "loading" ? <Loading title={t("benchmark.loading.title")} body={t("benchmark.loading.body")} /> :
+            bState === "error" ? <Empty title="프로덕션 비교 준비 중" body="시장별 프로덕션 벤치마크 데이터를 구축하고 있어요. 히트 분석 탭을 이용해주세요." /> :
             !benchmark ? <Empty title={t("benchmark.empty.title")} body={t("benchmark.empty.body")} /> :
             benchmark.error ? <Empty title={t("benchmark.error.title")} body={benchmark.error} /> :
             <div className="stack">
@@ -907,6 +909,7 @@ export default function Studio() {
           {/* ─── Viral Tab ─── */}
           {tab === "viral" && (
             vState === "loading" ? <Loading title={t("viral.loading.title")} body={t("viral.loading.body")} /> :
+            vState === "error" ? <Empty title="숏폼 구간 분석 준비 중" body="바이럴 구간 탐지 기능을 준비하고 있어요. 히트 분석 탭의 숏폼 추천을 참고해주세요." /> :
             !viral ? <Empty title={t("viral.empty.title")} body={t("viral.empty.body")} /> :
             <div className="stack">
               <section className="subpanel feature-hero">
