@@ -10,13 +10,44 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from core.analyzer import extract_features
-from core.similarity import ReferenceDatabase, MARKETS
-from core.deep_analyzer import deep_analyze
-from core.gemini_analyst import analyze_market_fit
-from core.gemini_structured import analyze_structured
-from core.benchmark import benchmark_track, find_viral_segment, compare_ab
-from core.hit_analyzer import analyze_hit_potential, analyze_timing
+# Lazy imports — librosa/sklearn 없어도 서버 시작되게
+def _lazy_import(module, name):
+    try:
+        mod = __import__(module, fromlist=[name])
+        return getattr(mod, name)
+    except ImportError:
+        return None
+
+try:
+    from core.analyzer import extract_features
+    from core.similarity import ReferenceDatabase, MARKETS
+    from core.deep_analyzer import deep_analyze
+    from core.gemini_analyst import analyze_market_fit
+    from core.gemini_structured import analyze_structured
+    from core.benchmark import benchmark_track, find_viral_segment, compare_ab
+    from core.hit_analyzer import analyze_hit_potential, analyze_timing
+except ImportError as e:
+    import warnings
+    warnings.warn(f"Some analysis modules unavailable: {e}")
+    extract_features = None
+    MARKETS = {"kr": "한국", "us": "미국", "jp": "일본", "br": "브라질",
+               "latam": "라틴아메리카", "sea": "동남아시아", "europe": "유럽",
+               "uk": "영국", "mena": "중동", "africa": "아프리카",
+               "india": "인도", "china": "중화권"}
+    class ReferenceDatabase:
+        def stats(self): return {}
+        def find_similar(self, *a, **kw): return []
+        def market_scores(self, *a, **kw): return {}
+        def score_method(self): return "unavailable"
+    deep_analyze = None
+    analyze_market_fit = None
+    analyze_structured = None
+    benchmark_track = None
+    find_viral_segment = None
+    compare_ab = None
+    analyze_hit_potential = None
+    analyze_timing = None
+
 from core.gemini_listen import listen_and_analyze
 from core.db.database import init_db
 from core.api.artists import router as artists_router
@@ -148,11 +179,8 @@ async def hit_analyze(
     file: UploadFile = File(...),
     market: str = Form("kr"),
 ):
-    """실제 차트 데이터 기반 히트 가능성 분석.
-
-    기존 /api/analyze는 librosa 435곡 기반 (참고용).
-    이 엔드포인트는 30,000곡 실제 차트 데이터 기반 (신뢰도 높음).
-    """
+    if not analyze_hit_potential:
+        raise HTTPException(503, "분석 모듈 준비 중")
     audio_bytes = await file.read()
     result = analyze_hit_potential(audio_bytes, market)
     return result
@@ -163,7 +191,8 @@ async def hit_timing(
     file: UploadFile = File(...),
     market: str = Form("kr"),
 ):
-    """시기 분석 — 이 곡을 지금 내면 맞는지, 언제 내는 게 좋은지."""
+    if not analyze_timing:
+        raise HTTPException(503, "분석 모듈 준비 중")
     audio_bytes = await file.read()
     result = analyze_timing(audio_bytes, market)
     return result
@@ -197,7 +226,8 @@ async def analyze(
     file: UploadFile = File(...),
     market: str = Form("kr"),
 ):
-    # Validate
+    if not extract_features:
+        raise HTTPException(503, "오디오 분석 모듈 준비 중")
     if market not in MARKETS:
         raise HTTPException(400, f"Invalid market: {market}")
 
@@ -257,6 +287,8 @@ async def gemini_analysis(
     analysis_json: str = Form("{}"),
     user_prompt: str = Form(""),
 ):
+    if not extract_features:
+        raise HTTPException(503, "분석 모듈 준비 중")
     audio_bytes = await file.read()
     deep = json.loads(analysis_json) if analysis_json != "{}" else None
 
@@ -287,6 +319,8 @@ async def gemini_structured(
     analysis_json: str = Form("{}"),
 ):
     """Returns structured JSON for SaaS card/widget rendering."""
+    if not extract_features:
+        raise HTTPException(503, "분석 모듈 준비 중")
     audio_bytes = await file.read()
     deep = json.loads(analysis_json) if analysis_json != "{}" else None
 
@@ -310,6 +344,8 @@ async def run_benchmark(
     file: UploadFile = File(...),
     market: str = Form("kr"),
 ):
+    if not benchmark_track:
+        raise HTTPException(503, "벤치마크 모듈 준비 중")
     audio_bytes = await file.read()
     result = benchmark_track(audio_bytes, db, market)
     return result
@@ -319,6 +355,8 @@ async def run_benchmark(
 async def run_viral(
     file: UploadFile = File(...),
 ):
+    if not find_viral_segment:
+        raise HTTPException(503, "바이럴 분석 모듈 준비 중")
     audio_bytes = await file.read()
     result = find_viral_segment(audio_bytes)
     return result
@@ -330,6 +368,8 @@ async def run_compare(
     file_b: UploadFile = File(...),
     market: str = Form("kr"),
 ):
+    if not compare_ab:
+        raise HTTPException(503, "비교 분석 모듈 준비 중")
     a_bytes = await file_a.read()
     b_bytes = await file_b.read()
     result = compare_ab(a_bytes, b_bytes, db, market)
