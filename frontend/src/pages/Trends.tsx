@@ -224,6 +224,26 @@ export default function Trends() {
   );
 }
 
+const PLATFORM_LOGOS: Record<string, { bg: string; letter: string; color: string }> = {
+  "멜론": { bg: "#00cd3c", letter: "M", color: "#fff" },
+  "벅스": { bg: "#ea4c89", letter: "B", color: "#fff" },
+  "Billboard": { bg: "#000", letter: "B", color: "#fff" },
+  "Spotify": { bg: "#1db954", letter: "S", color: "#fff" },
+};
+
+function PlatformLogo({ platform }: { platform: string }) {
+  const key = Object.keys(PLATFORM_LOGOS).find(k => platform.includes(k));
+  if (!key) return null;
+  const { bg, letter, color } = PLATFORM_LOGOS[key];
+  return (
+    <div style={{
+      width: 24, height: 24, borderRadius: 6, background: bg,
+      display: "grid", placeItems: "center",
+      fontSize: 13, fontWeight: 800, color, flexShrink: 0,
+    }}>{letter}</div>
+  );
+}
+
 function ChartCard({ data, loading, onSelect }: { data: ChartData | null; loading: boolean; onSelect?: (e: ChartEntry) => void }) {
   if (loading && !data) {
     return (
@@ -252,7 +272,10 @@ function ChartCard({ data, loading, onSelect }: { data: ChartData | null; loadin
   return (
     <div className="chart-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <p className="chart-title" style={{ margin: 0 }}>{data.platform}</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <PlatformLogo platform={data.platform} />
+          <p className="chart-title" style={{ margin: 0 }}>{data.platform}</p>
+        </div>
         {data.live && <span className="status-badge status-active" style={{ fontSize: 10 }}>LIVE</span>}
       </div>
       <div style={{ display: "grid", gap: 4 }}>
