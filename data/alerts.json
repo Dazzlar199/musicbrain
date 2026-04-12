@@ -1,0 +1,324 @@
+[
+  {
+    "id": "1f22721a",
+    "type": "rising",
+    "platform": "멜론",
+    "title": "PLAVE - 이 밤을 빌려 말해요",
+    "message": "멜론 차트 44위 → 33위 (11순위 상승)",
+    "rank": 33,
+    "prev_rank": 44,
+    "timestamp": "2026-04-12T11:28:27.137798",
+    "read": false
+  },
+  {
+    "id": "1f591f51",
+    "type": "rising",
+    "platform": "멜론",
+    "title": "에픽하이 (EPIK HIGH) - Love Love Love (Feat. Yoong Jin Of Casker)",
+    "message": "멜론 차트 39위 → 34위 (5순위 상승)",
+    "rank": 34,
+    "prev_rank": 39,
+    "timestamp": "2026-04-12T11:28:27.137819",
+    "read": false
+  },
+  {
+    "id": "1d903a10",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "AKMU (악뮤) - 기쁨, 슬픔, 아름다운 마음",
+    "message": "멜론 차트 1위 신규 진입",
+    "rank": 1,
+    "timestamp": "2026-04-12T04:57:43.688389",
+    "read": false
+  },
+  {
+    "id": "80e68956",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "AKMU (악뮤) - 소문의 낙원",
+    "message": "멜론 차트 2위 신규 진입",
+    "rank": 2,
+    "timestamp": "2026-04-12T04:57:43.688412",
+    "read": false
+  },
+  {
+    "id": "6e2cf6e0",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "방탄소년단 - SWIM",
+    "message": "멜론 차트 3위 신규 진입",
+    "rank": 3,
+    "timestamp": "2026-04-12T04:57:43.688419",
+    "read": false
+  },
+  {
+    "id": "e2d95b92",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "IVE (아이브) - BANG BANG",
+    "message": "멜론 차트 4위 신규 진입",
+    "rank": 4,
+    "timestamp": "2026-04-12T04:57:43.688424",
+    "read": false
+  },
+  {
+    "id": "07eeb6a6",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "Hearts2Hearts (하츠투하츠) - RUDE!",
+    "message": "멜론 차트 5위 신규 진입",
+    "rank": 5,
+    "timestamp": "2026-04-12T04:57:43.688430",
+    "read": false
+  },
+  {
+    "id": "f5961ce0",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "KiiiKiii (키키) - 404 (New Era)",
+    "message": "멜론 차트 6위 신규 진입",
+    "rank": 6,
+    "timestamp": "2026-04-12T04:57:43.688435",
+    "read": false
+  },
+  {
+    "id": "7c3e70f0",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "한로로 - 사랑하게 될 거야",
+    "message": "멜론 차트 7위 신규 진입",
+    "rank": 7,
+    "timestamp": "2026-04-12T04:57:43.688440",
+    "read": false
+  },
+  {
+    "id": "3982e8e0",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "방탄소년단 - Body to Body",
+    "message": "멜론 차트 8위 신규 진입",
+    "rank": 8,
+    "timestamp": "2026-04-12T04:57:43.688446",
+    "read": false
+  },
+  {
+    "id": "2d944b90",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "WOODZ - Drowning",
+    "message": "멜론 차트 9위 신규 진입",
+    "rank": 9,
+    "timestamp": "2026-04-12T04:57:43.688451",
+    "read": false
+  },
+  {
+    "id": "f611e19c",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "한로로 - 0+0",
+    "message": "멜론 차트 10위 신규 진입",
+    "rank": 10,
+    "timestamp": "2026-04-12T04:57:43.688456",
+    "read": false
+  },
+  {
+    "id": "e70258f6",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "화사 (HWASA) - Good Goodbye",
+    "message": "멜론 차트 11위 신규 진입",
+    "rank": 11,
+    "timestamp": "2026-04-12T04:57:43.688461",
+    "read": false
+  },
+  {
+    "id": "648a7c99",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "다비치 - 타임캡슐",
+    "message": "멜론 차트 12위 신규 진입",
+    "rank": 12,
+    "timestamp": "2026-04-12T04:57:43.688466",
+    "read": false
+  },
+  {
+    "id": "d9e72914",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "이찬혁 - 멸종위기사랑",
+    "message": "멜론 차트 13위 신규 진입",
+    "rank": 13,
+    "timestamp": "2026-04-12T04:57:43.688470",
+    "read": false
+  },
+  {
+    "id": "59c424c8",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "카더가든 - 그대 작은 나의 세상이 되어",
+    "message": "멜론 차트 14위 신규 진입",
+    "rank": 14,
+    "timestamp": "2026-04-12T04:57:43.688475",
+    "read": false
+  },
+  {
+    "id": "bc5cc68d",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "10CM - 너에게 닿기를",
+    "message": "멜론 차트 15위 신규 진입",
+    "rank": 15,
+    "timestamp": "2026-04-12T04:57:43.688480",
+    "read": false
+  },
+  {
+    "id": "1a5f9449",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "방탄소년단 - 2.0",
+    "message": "멜론 차트 16위 신규 진입",
+    "rank": 16,
+    "timestamp": "2026-04-12T04:57:43.688485",
+    "read": false
+  },
+  {
+    "id": "42f50617",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "김하온 (HAON) - TICK TOCK (Feat. ZICO) (Prod. by ZICO, Crush)",
+    "message": "멜론 차트 17위 신규 진입",
+    "rank": 17,
+    "timestamp": "2026-04-12T04:57:43.688489",
+    "read": false
+  },
+  {
+    "id": "56b1f717",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "방탄소년단 - Hooligan",
+    "message": "멜론 차트 18위 신규 진입",
+    "rank": 18,
+    "timestamp": "2026-04-12T04:57:43.688494",
+    "read": false
+  },
+  {
+    "id": "3f24c1ba",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "HUNTR/X - Golden",
+    "message": "멜론 차트 19위 신규 진입",
+    "rank": 19,
+    "timestamp": "2026-04-12T04:57:43.688499",
+    "read": false
+  },
+  {
+    "id": "0d387cf2",
+    "type": "new_entry",
+    "platform": "멜론",
+    "title": "AKMU (악뮤) - 어떻게 이별까지 사랑하겠어, 널 사랑하는 거지",
+    "message": "멜론 차트 20위 신규 진입",
+    "rank": 20,
+    "timestamp": "2026-04-12T04:57:43.688504",
+    "read": false
+  },
+  {
+    "id": "dec60f3a",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "AKMU(악뮤) - 소문의 낙원",
+    "message": "벅스 차트 1위 신규 진입",
+    "rank": 1,
+    "timestamp": "2026-04-12T04:57:43.816750",
+    "read": false
+  },
+  {
+    "id": "52d7a155",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "AKMU(악뮤) - 기쁨, 슬픔, 아름다운 마음",
+    "message": "벅스 차트 2위 신규 진입",
+    "rank": 2,
+    "timestamp": "2026-04-12T04:57:43.816768",
+    "read": false
+  },
+  {
+    "id": "84c38430",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "Hearts2Hearts (하츠투하츠) - RUDE!",
+    "message": "벅스 차트 3위 신규 진입",
+    "rank": 3,
+    "timestamp": "2026-04-12T04:57:43.816775",
+    "read": false
+  },
+  {
+    "id": "0c977272",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "IVE (아이브) - BANG BANG",
+    "message": "벅스 차트 4위 신규 진입",
+    "rank": 4,
+    "timestamp": "2026-04-12T04:57:43.816782",
+    "read": false
+  },
+  {
+    "id": "b000d054",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "KiiiKiii (키키) - 404 (New Era)",
+    "message": "벅스 차트 5위 신규 진입",
+    "rank": 5,
+    "timestamp": "2026-04-12T04:57:43.816787",
+    "read": false
+  },
+  {
+    "id": "dc72ae70",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "한로로 - 사랑하게 될 거야",
+    "message": "벅스 차트 6위 신규 진입",
+    "rank": 6,
+    "timestamp": "2026-04-12T04:57:43.816793",
+    "read": false
+  },
+  {
+    "id": "c560be5c",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "한로로 - 0+0",
+    "message": "벅스 차트 7위 신규 진입",
+    "rank": 7,
+    "timestamp": "2026-04-12T04:57:43.816799",
+    "read": false
+  },
+  {
+    "id": "9d3292f3",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "도경수(D.O.) - Popcorn",
+    "message": "벅스 차트 8위 신규 진입",
+    "rank": 8,
+    "timestamp": "2026-04-12T04:57:43.816804",
+    "read": false
+  },
+  {
+    "id": "2adde855",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "AKMU(악뮤) - 봄 색깔",
+    "message": "벅스 차트 9위 신규 진입",
+    "rank": 9,
+    "timestamp": "2026-04-12T04:57:43.816810",
+    "read": false
+  },
+  {
+    "id": "5df4d567",
+    "type": "new_entry",
+    "platform": "벅스",
+    "title": "WOODZ - Drowning",
+    "message": "벅스 차트 10위 신규 진입",
+    "rank": 10,
+    "timestamp": "2026-04-12T04:57:43.816816",
+    "read": false
+  }
+]

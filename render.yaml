@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: music-brain
+    runtime: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      cd frontend && npm install && npm run build && cd ..
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: NODE_VERSION
+        value: "20.11.0"

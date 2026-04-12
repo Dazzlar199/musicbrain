@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+.env
+data/references/*.pkl
+data/audio/
+data/models/*.parquet
+data/kaggle/
+*.mp3
+*.wav
+*.flac
+.DS_Store
+frontend/node_modules/
+frontend/dist/
+*.db
