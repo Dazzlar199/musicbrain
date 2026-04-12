@@ -115,19 +115,28 @@ export default function Trends() {
 
         {chartTab === "live" && (
           <div className="stack">
-            {/* Spotify country selector — 대표 4개 + 더보기 */}
-            <SpotifyCountryFilter selected={liveCountry} onSelect={setLiveCountry} />
+            {/* Spotify 국가별 차트 */}
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--text-secondary)" }}>Spotify Top 50 — 국가 선택</p>
+              <SpotifyCountryFilter selected={liveCountry} onSelect={setLiveCountry} />
+            </div>
 
             <div className="card-grid-2">
-              <ChartCard data={melonChart} loading={chartsLoading} onSelect={setSelectedTrack} />
-              <ChartCard data={bugsChart} loading={chartsLoading} onSelect={setSelectedTrack} />
               <ChartCard data={spotifyLive} loading={chartsLoading} onSelect={setSelectedTrack} />
               <ChartCard data={billboardChart} loading={chartsLoading} onSelect={setSelectedTrack} />
+              <ChartCard data={melonChart} loading={chartsLoading} onSelect={setSelectedTrack} />
+              <ChartCard data={bugsChart} loading={chartsLoading} onSelect={setSelectedTrack} />
             </div>
           </div>
         )}
 
         {chartTab === "trends" && <>
+        {Object.keys(overview).length === 0 ? (
+          <div style={{ textAlign: "center", padding: 60, color: "var(--text-disabled)" }}>
+            <p style={{ fontSize: 15, fontWeight: 600 }}>시장 분석 데이터 준비 중</p>
+            <p style={{ fontSize: 13 }}>Spotify 차트 데이터가 연결되면 시장별 오디오 특성을 분석합니다</p>
+          </div>
+        ) : <>
         {/* Market selector chips */}
         <div className="chip-bar">
           {marketCards.map(([code]) => (
@@ -143,7 +152,7 @@ export default function Trends() {
           <div className="kpi-grid">
             <div className="kpi-card">
               <Globe2 size={20} className="kpi-icon" />
-              <div><span>유니크 트랙</span><strong>{detail.unique_tracks.toLocaleString()}</strong></div>
+              <div><span>유니크 트랙</span><strong>{detail.unique_tracks?.toLocaleString() ?? "—"}</strong></div>
             </div>
             <div className="kpi-card">
               <Music size={20} className="kpi-icon" style={{ color: "#3182f6" }} />
@@ -214,7 +223,7 @@ export default function Trends() {
             </table>
           </div>
         )}
-        </>}
+        </>}</>}
         {/* Track Detail Modal */}
         {selectedTrack && (
           <TrackDetailModal track={selectedTrack} onClose={() => setSelectedTrack(null)} />
