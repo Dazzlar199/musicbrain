@@ -152,6 +152,7 @@ export function Nav({ nav, active }: { nav: ReturnType<typeof useNavigate>; acti
   const groups = [
     { label: "분석", items: [
       { key: "studio", label: "곡 분석", path: "/studio" },
+      { key: "buzz", label: "팬덤 버즈", path: "/buzz" },
       { key: "demos", label: "데모 관리", path: "/demos" },
       { key: "trends", label: "차트·트렌드", path: "/trends" },
     ]},

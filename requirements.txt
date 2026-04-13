@@ -16,3 +16,5 @@ spotifyscraper>=2.1.0
 melon-chart.py>=1.0.0
 bugs-chart.py>=1.0.0
 billboard.py>=7.0.0
+pytrends>=4.9.0
+feedparser>=6.0.0
