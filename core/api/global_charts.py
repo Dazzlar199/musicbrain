@@ -8,7 +8,7 @@ import pandas as pd
 router = APIRouter(prefix="/api/charts", tags=["charts"])
 
 _cache = {}
-_cache_ttl = 300
+_cache_ttl = 3600  # 1시간 캐시 — 차트는 자주 안 바뀜
 
 KAGGLE_CHARTS = Path(__file__).parent.parent.parent / "data" / "kaggle" / "charts" / "universal_top_spotify_songs.csv"
 
