@@ -30,6 +30,8 @@ class CalendarRequest(BaseModel):
     release_date: str  # YYYY-MM-DD
     market: str = "kr"
     platforms: list[str] = ["tiktok", "instagram", "youtube", "x"]
+    # 곡 분석 결과 (선택 — 있으면 곡에 맞춤 기획)
+    song_analysis: dict | None = None
 
 
 # ─── Gemini 콘텐츠 캘린더 생성 ───
@@ -62,12 +64,35 @@ def _generate_calendar(req: CalendarRequest) -> dict:
         }
         market_name = market_names.get(req.market, req.market)
 
+        # 곡 분석 결과가 있으면 프롬프트에 추가
+        song_context = ""
+        if req.song_analysis:
+            sa = req.song_analysis
+            parts = []
+            if sa.get("genre"): parts.append(f"장르: {sa['genre']}")
+            if sa.get("mood"): parts.append(f"분위기: {sa['mood']}")
+            if sa.get("energy_level"): parts.append(f"에너지: {sa['energy_level']}/10")
+            if sa.get("one_line"): parts.append(f"한줄평: {sa['one_line']}")
+            if sa.get("hook", {}).get("timestamp"): parts.append(f"후크 구간: {sa['hook']['timestamp']}")
+            if sa.get("hook", {}).get("description"): parts.append(f"후크 특징: {sa['hook']['description']}")
+            if sa.get("shortform", {}).get("best_clip"): parts.append(f"숏폼 추천 구간: {sa['shortform']['best_clip']}")
+            if sa.get("shortform", {}).get("reason"): parts.append(f"숏폼 이유: {sa['shortform']['reason']}")
+            if sa.get("vocal", {}).get("style"): parts.append(f"보컬 스타일: {sa['vocal']['style']}")
+            if sa.get("what_works"):
+                parts.append("강점: " + " / ".join(sa["what_works"][:3]))
+            if sa.get("market_fit", {}).get("reason"):
+                parts.append(f"시장 적합도: {sa['market_fit']['reason']}")
+            if parts:
+                song_context = "\n\n곡 분석 결과 (이 정보를 기반으로 콘텐츠를 맞춤 기획해):\n" + "\n".join(f"- {p}" for p in parts)
+                song_context += "\n\n위 분석 결과를 적극 활용해줘. 특히:\n- 숏폼 추천 구간을 틱톡/릴스 챌린지에 활용\n- 후크 구간을 티저/하이라이트 클립에 사용\n- 곡의 분위기에 맞는 비주얼 컨셉 제안\n- 강점을 살린 콘텐츠 방향\n"
+
         client = genai.Client(api_key=api_key)
         r = client.models.generate_content(
             model="gemini-3-flash-preview",
             contents=f"""아티스트 "{req.artist_name}"의 신곡 "{req.track_title}" 발매일은 {req.release_date}이야.
 타겟 시장: {market_name}
 활용 플랫폼: {platform_str}
+{song_context}
 
 D-14부터 D+30까지의 SNS 콘텐츠 캘린더를 만들어줘.
 모든 텍스트는 한국어로 작성해.

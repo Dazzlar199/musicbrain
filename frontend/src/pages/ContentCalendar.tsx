@@ -99,6 +99,9 @@ export default function ContentCalendar() {
   const [error, setError] = useState("");
   const [result, setResult] = useState<CalendarResult | null>(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [songAnalysis, setSongAnalysis] = useState<any>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   useEffect(() => {
     if (current) {
@@ -118,6 +121,23 @@ export default function ContentCalendar() {
     );
   };
 
+  const handleAnalyzeSong = async () => {
+    if (!audioFile) return;
+    setAnalyzing(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", audioFile);
+      fd.append("market", selectedMarkets[0] || "kr");
+      const r = await fetch("/api/listen", { method: "POST", body: fd });
+      const d = await r.json();
+      if (d && !d.error) {
+        setSongAnalysis(d);
+        if (d.genre && !trackTitle) setTrackTitle(d.one_line?.split(" ")[0] || "");
+      }
+    } catch { }
+    setAnalyzing(false);
+  };
+
   const handleGenerate = async () => {
     if (!artistName.trim() || !trackTitle.trim() || !releaseDate) return;
     setLoading(true);
@@ -133,6 +153,7 @@ export default function ContentCalendar() {
           release_date: releaseDate,
           market: selectedMarkets[0] || "kr",
           platforms: selectedPlatforms,
+          song_analysis: songAnalysis || undefined,
         }),
       });
       if (!r.ok) throw new Error(`서버 오류 (${r.status})`);
@@ -287,6 +308,35 @@ export default function ContentCalendar() {
                 style={inputStyle}
               />
             </div>
+          </div>
+
+          {/* 곡 분석 연동 */}
+          <div style={{ marginBottom: 12, padding: 14, border: "1px solid var(--border-light)", borderRadius: 10, background: songAnalysis ? "var(--blue-light)" : "transparent" }}>
+            <label style={{ fontSize: 12, color: "var(--text-disabled)", display: "block", marginBottom: 6 }}>
+              곡 분석 연동 (선택 — 곡에 맞춘 맞춤 기획)
+            </label>
+            {songAnalysis ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 13, color: "var(--blue)", fontWeight: 600 }}>분석 연동됨</span>
+                <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                  {songAnalysis.genre} · {songAnalysis.mood} · 에너지 {songAnalysis.energy_level}/10
+                  {songAnalysis.shortform?.best_clip && ` · 숏폼 구간: ${songAnalysis.shortform.best_clip}`}
+                </span>
+                <button className="btn btn-ghost btn-sm" onClick={() => setSongAnalysis(null)} style={{ marginLeft: "auto" }}>해제</button>
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input type="file" accept="audio/*" onChange={e => setAudioFile(e.target.files?.[0] || null)}
+                  style={{ fontSize: 12, flex: 1 }} />
+                <button className="btn btn-outline btn-sm" onClick={handleAnalyzeSong}
+                  disabled={!audioFile || analyzing}>
+                  {analyzing ? "분석 중..." : "곡 분석"}
+                </button>
+              </div>
+            )}
+            <p style={{ fontSize: 11, color: "var(--text-disabled)", marginTop: 6 }}>
+              곡을 올리면 AI가 듣고 분석한 결과(숏폼 구간, 후크, 분위기)를 캘린더 기획에 반영합니다
+            </p>
           </div>
 
           {/* Markets */}
