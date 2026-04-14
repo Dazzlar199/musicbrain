@@ -103,7 +103,7 @@ export default function Watchlist() {
     if (!silent) setLoading(true);
     setError("");
     try {
-      const r = await fetch("/api/watchlist");
+      const r = await fetch("/api/watchlist/");
       if (!r.ok) throw new Error(`서버 오류 (${r.status})`);
       const d = await r.json();
       setItems(d.items || []);
