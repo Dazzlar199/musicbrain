@@ -62,16 +62,22 @@ export default function Buzz() {
   const [compareData, setCompareData] = useState<Array<{ artist: string; score: number; trend_avg: number; trend_peak: number }>>([]);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const [showTrendsInfo, setShowTrendsInfo] = useState(false);
+  const [showReddit, setShowReddit] = useState(5);
+  const [showNews, setShowNews] = useState(5);
+  const [showYT, setShowYT] = useState(6);
+  const [showXTweets, setShowXTweets] = useState(5);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState("");
 
-  const loadBuzz = async (name: string) => {
-    setLoading(true);
-    setData(null);
+  const loadBuzz = async (name: string, silent = false) => {
+    if (!silent) { setLoading(true); setData(null); }
     try {
       const r = await fetch(`/api/buzz/${encodeURIComponent(name)}`);
       const d = await r.json();
       setData(d);
+      setLastUpdate(new Date().toLocaleTimeString("ko-KR"));
     } catch { }
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   const loadCompare = async () => {
@@ -85,13 +91,25 @@ export default function Buzz() {
 
   useEffect(() => {
     if (current) {
-      setSearchQuery(current.stage_name || current.name);
-      loadBuzz(current.stage_name || current.name);
+      const name = current.stage_name || current.name;
+      setSearchQuery(name);
+      loadBuzz(name);
     }
   }, [current?.id]);
 
+  // 자동 새로고침
+  useEffect(() => {
+    if (!autoRefresh || !searchQuery) return;
+    const interval = setInterval(() => {
+      loadBuzz(searchQuery, true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [autoRefresh, searchQuery]);
+
   const handleSearch = () => {
-    if (searchQuery.trim()) loadBuzz(searchQuery.trim());
+    if (!searchQuery.trim()) return;
+    setShowReddit(5); setShowNews(5); setShowYT(6); setShowXTweets(5);
+    loadBuzz(searchQuery.trim());
   };
 
   return (
@@ -118,7 +136,22 @@ export default function Buzz() {
           <button className="btn btn-primary" onClick={handleSearch} disabled={loading || !searchQuery.trim()}>
             {loading ? "분석 중..." : "버즈 분석"}
           </button>
+          {data && (
+            <button
+              className={`btn ${autoRefresh ? "btn-primary" : "btn-outline"} btn-sm`}
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              style={{ whiteSpace: "nowrap" }}
+            >
+              {autoRefresh ? "실시간 ON" : "실시간"}
+            </button>
+          )}
         </div>
+        {data && lastUpdate && (
+          <div style={{ fontSize: 11, color: "var(--text-disabled)", marginTop: -16, marginBottom: 16, display: "flex", gap: 8, alignItems: "center" }}>
+            <span>마지막 업데이트: {lastUpdate}</span>
+            {autoRefresh && <span style={{ color: "#22c55e" }}>30초마다 자동 새로고침 중</span>}
+          </div>
+        )}
 
         {loading && (
           <div style={{ textAlign: "center", padding: 60, color: "var(--text-disabled)" }}>
@@ -206,8 +239,8 @@ export default function Buzz() {
                     총 반응 {data.x.total_engagement?.toLocaleString()}
                   </span>
                 </div>
-                <div style={{ display: "grid", gap: 8, maxHeight: 400, overflow: "auto" }}>
-                  {data.x.tweets.slice(0, 10).map((t: any, i: number) => (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {data.x.tweets.slice(0, showXTweets).map((t: any, i: number) => (
                     <a key={i} href={t.url} target="_blank" rel="noreferrer"
                       style={{ display: "block", padding: 12, border: "1px solid var(--border-light)", borderRadius: 10, textDecoration: "none", color: "inherit" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -222,6 +255,11 @@ export default function Buzz() {
                       </div>
                     </a>
                   ))}
+                  {data.x.tweets.length > showXTweets && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => setShowXTweets(s => s + 10)} style={{ width: "100%", marginTop: 4 }}>
+                      트윗 더보기 ({data.x.tweets.length - showXTweets}개 남음)
+                    </button>
+                  )}
                 </div>
               </section>
             )}
@@ -274,8 +312,8 @@ export default function Buzz() {
                     ))}
                   </div>
                 )}
-                <div style={{ display: "grid", gap: 6, maxHeight: 300, overflow: "auto" }}>
-                  {data.reddit.posts.slice(0, 8).map((p, i) => (
+                <div style={{ display: "grid", gap: 6 }}>
+                  {data.reddit.posts.slice(0, showReddit).map((p, i) => (
                     <a key={i} href={p.url} target="_blank" rel="noreferrer"
                       style={{ display: "block", padding: "8px 0", borderBottom: "1px solid var(--border-light)", textDecoration: "none", color: "inherit" }}>
                       <p style={{ fontSize: 13, margin: 0, lineHeight: 1.4 }}>{p.title}</p>
@@ -285,6 +323,11 @@ export default function Buzz() {
                     </a>
                   ))}
                   {data.reddit.posts.length === 0 && <p style={{ color: "var(--text-disabled)", fontSize: 13 }}>최근 Reddit 언급 없음</p>}
+                  {data.reddit.posts.length > showReddit && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => setShowReddit(s => s + 10)} style={{ width: "100%" }}>
+                      더보기 ({data.reddit.posts.length - showReddit}개)
+                    </button>
+                  )}
                 </div>
               </section>
 
@@ -294,8 +337,8 @@ export default function Buzz() {
                   <Newspaper size={14} style={{ marginRight: 6, verticalAlign: "middle" }} />
                   뉴스
                 </p>
-                <div style={{ display: "grid", gap: 6, maxHeight: 300, overflow: "auto" }}>
-                  {data.news.articles.slice(0, 8).map((a, i) => (
+                <div style={{ display: "grid", gap: 6 }}>
+                  {data.news.articles.slice(0, showNews).map((a, i) => (
                     <a key={i} href={a.url} target="_blank" rel="noreferrer"
                       style={{ display: "block", padding: "8px 0", borderBottom: "1px solid var(--border-light)", textDecoration: "none", color: "inherit" }}>
                       <p style={{ fontSize: 13, margin: 0, lineHeight: 1.4 }}>{a.title}</p>
@@ -303,6 +346,11 @@ export default function Buzz() {
                     </a>
                   ))}
                   {data.news.articles.length === 0 && <p style={{ color: "var(--text-disabled)", fontSize: 13 }}>최근 뉴스 없음</p>}
+                  {data.news.articles.length > showNews && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => setShowNews(s => s + 10)} style={{ width: "100%" }}>
+                      더보기 ({data.news.articles.length - showNews}개)
+                    </button>
+                  )}
                 </div>
               </section>
             </div>
@@ -314,7 +362,7 @@ export default function Buzz() {
                 YouTube — 최신 영상
               </p>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 10 }}>
-                {data.youtube.videos.slice(0, 6).map((v, i) => (
+                {data.youtube.videos.slice(0, showYT).map((v, i) => (
                   <a key={i} href={v.url} target="_blank" rel="noreferrer"
                     style={{ display: "block", padding: 12, border: "1px solid var(--border-light)", borderRadius: 10, textDecoration: "none", color: "inherit", transition: "background 0.1s" }}
                     onMouseEnter={e => (e.currentTarget.style.background = "var(--bg)")}
@@ -325,6 +373,11 @@ export default function Buzz() {
                 ))}
               </div>
               {data.youtube.videos.length === 0 && <p style={{ color: "var(--text-disabled)", fontSize: 13 }}>최근 영상 없음</p>}
+              {data.youtube.videos.length > showYT && (
+                <button className="btn btn-ghost btn-sm" onClick={() => setShowYT(s => s + 10)} style={{ width: "100%", marginTop: 8 }}>
+                  영상 더보기 ({data.youtube.videos.length - showYT}개)
+                </button>
+              )}
             </section>
 
             {/* 아티스트 비교 */}

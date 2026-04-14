@@ -93,7 +93,7 @@ def _reddit_buzz(keyword: str, limit: int = 20) -> dict:
 
 # ─── 네이버 뉴스 ───
 
-def _naver_news(keyword: str, limit: int = 10) -> dict:
+def _naver_news(keyword: str, limit: int = 20) -> dict:
     """네이버 뉴스 검색 (RSS)."""
     try:
         import urllib.parse
@@ -116,7 +116,7 @@ def _naver_news(keyword: str, limit: int = 10) -> dict:
 
 # ─── YouTube ───
 
-def _youtube_buzz(keyword: str, limit: int = 10) -> dict:
+def _youtube_buzz(keyword: str, limit: int = 20) -> dict:
     """YouTube 최근 영상 검색."""
     try:
         import urllib.parse
