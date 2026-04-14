@@ -26,6 +26,7 @@ class ArtistCreate(BaseModel):
     youtube_id: Optional[str] = None
     instagram_handle: Optional[str] = None
     tiktok_handle: Optional[str] = None
+    x_handle: Optional[str] = None
     label: Optional[str] = None
     tags: Optional[list] = []
 
@@ -128,7 +129,7 @@ def _serialize(a: Artist, full=False) -> dict:
         d.update({
             "bio": a.bio, "notes": a.notes,
             "spotify_id": a.spotify_id, "youtube_id": a.youtube_id,
-            "instagram_handle": a.instagram_handle, "tiktok_handle": a.tiktok_handle,
+            "instagram_handle": a.instagram_handle, "tiktok_handle": a.tiktok_handle, "x_handle": a.x_handle,
             "signed_date": str(a.signed_date) if a.signed_date else None,
             "contract_end": str(a.contract_end) if a.contract_end else None,
             "track_count": len(a.tracks), "project_count": len(a.projects),

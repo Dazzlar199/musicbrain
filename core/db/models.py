@@ -51,6 +51,7 @@ class Artist(Base):
     youtube_id = Column(String(100))
     instagram_handle = Column(String(100))
     tiktok_handle = Column(String(100))
+    x_handle = Column(String(100))
 
     # Status
     status = Column(String(30), default="active")  # active, developing, inactive, graduated

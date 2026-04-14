@@ -294,6 +294,8 @@ function ArtistAddModal({ tags, onClose, onAdded }: { tags: string[]; onClose: (
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [manual, setManual] = useState({ name: "", genre: "", bio: "", instagram: "", tiktok: "", x_handle: "", youtube: "", spotify_url: "" });
 
   const doSearch = async () => {
     if (!query.trim()) return;
@@ -329,12 +331,40 @@ function ArtistAddModal({ tags, onClose, onAdded }: { tags: string[]; onClose: (
         photo_url: selected.image || "",
         bio: selected.bio || "",
         genre: selected.genre || "",
+        instagram_handle: selected.instagram || "",
+        tiktok_handle: selected.tiktok || "",
+        x_handle: selected.x_handle || "",
+        youtube_id: selected.youtube || "",
         tags: tags,
       }),
     });
     setLoading(false);
     onAdded();
   };
+
+  const handleManualAdd = async () => {
+    if (!manual.name.trim()) return;
+    setLoading(true);
+    await fetch("/api/artists", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: manual.name,
+        stage_name: manual.name,
+        genre: manual.genre,
+        bio: manual.bio,
+        instagram_handle: manual.instagram,
+        tiktok_handle: manual.tiktok,
+        x_handle: manual.x_handle,
+        youtube_id: manual.youtube,
+        spotify_id: manual.spotify_url.includes("artist/") ? manual.spotify_url.split("artist/")[1]?.split("?")[0] || "" : "",
+        tags: tags,
+      }),
+    });
+    setLoading(false);
+    onAdded();
+  };
+
+  const inputStyle = { width: "100%", padding: "8px 12px", border: "1px solid var(--border)", borderRadius: 8, fontSize: 13 };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -344,7 +374,54 @@ function ArtistAddModal({ tags, onClose, onAdded }: { tags: string[]; onClose: (
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer" }}><X size={18} /></button>
         </div>
         <div className="modal-body">
-          {!selected ? (
+          {manualMode ? (
+            /* 직접 등록 모드 */
+            <div>
+              <div style={{ display: "grid", gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: 12, color: "var(--text-disabled)", display: "block", marginBottom: 4 }}>아티스트 이름 *</label>
+                  <input value={manual.name} onChange={e => setManual({...manual, name: e.target.value})} placeholder="활동명" style={inputStyle} autoFocus />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: "var(--text-disabled)", display: "block", marginBottom: 4 }}>장르</label>
+                  <input value={manual.genre} onChange={e => setManual({...manual, genre: e.target.value})} placeholder="K-pop, Hip-hop, R&B..." style={inputStyle} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, color: "var(--text-disabled)", display: "block", marginBottom: 4 }}>소개</label>
+                  <textarea value={manual.bio} onChange={e => setManual({...manual, bio: e.target.value})} placeholder="간단한 소개" rows={2} style={{...inputStyle, resize: "vertical"}} />
+                </div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: "var(--text-tertiary)", margin: "8px 0 0" }}>SNS 연결 (입력하면 자동 데이터 수집)</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <div>
+                    <label style={{ fontSize: 11, color: "var(--text-disabled)" }}>X (트위터)</label>
+                    <input value={manual.x_handle} onChange={e => setManual({...manual, x_handle: e.target.value})} placeholder="@handle" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: "var(--text-disabled)" }}>Instagram</label>
+                    <input value={manual.instagram} onChange={e => setManual({...manual, instagram: e.target.value})} placeholder="handle" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: "var(--text-disabled)" }}>TikTok</label>
+                    <input value={manual.tiktok} onChange={e => setManual({...manual, tiktok: e.target.value})} placeholder="@handle" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 11, color: "var(--text-disabled)" }}>YouTube</label>
+                    <input value={manual.youtube} onChange={e => setManual({...manual, youtube: e.target.value})} placeholder="채널 ID 또는 이름" style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 11, color: "var(--text-disabled)" }}>Spotify 아티스트 URL</label>
+                  <input value={manual.spotify_url} onChange={e => setManual({...manual, spotify_url: e.target.value})} placeholder="https://open.spotify.com/artist/..." style={inputStyle} />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 20 }}>
+                <button className="btn btn-outline" onClick={() => setManualMode(false)}>검색으로 돌아가기</button>
+                <button className="btn btn-primary" onClick={handleManualAdd} disabled={loading || !manual.name.trim()}>
+                  {loading ? "등록 중..." : "등록"}
+                </button>
+              </div>
+            </div>
+          ) : !selected ? (
             <>
               {/* 검색 */}
               <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
@@ -385,9 +462,23 @@ function ArtistAddModal({ tags, onClose, onAdded }: { tags: string[]; onClose: (
                   </button>
                 ))}
                 {results.length === 0 && query && !searching && (
-                  <p style={{ textAlign: "center", color: "var(--text-disabled)", padding: 20 }}>검색 결과가 없어요. 다른 이름으로 시도해보세요.</p>
+                  <div style={{ textAlign: "center", padding: 20 }}>
+                    <p style={{ color: "var(--text-disabled)", marginBottom: 12 }}>검색 결과가 없어요</p>
+                    <button className="btn btn-outline btn-sm" onClick={() => { setManualMode(true); setManual({...manual, name: query}); }}>
+                      "{query}" 직접 등록하기
+                    </button>
+                  </div>
                 )}
               </div>
+
+              {/* 직접 등록 링크 */}
+              {!searching && (
+                <div style={{ textAlign: "center", marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--border-light)" }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setManualMode(true)} style={{ color: "var(--blue)" }}>
+                    검색 없이 직접 등록
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             /* 선택된 아티스트 확인 */
