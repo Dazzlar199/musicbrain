@@ -3,17 +3,11 @@
 import os
 from fastapi import APIRouter
 from datetime import datetime
+from core.api.cache import SimpleCache
 
 router = APIRouter(prefix="/api/search", tags=["search"])
 
-_cache = {}
-_cache_ttl = 3600  # 1시간
-
-
-def _is_fresh(key: str) -> bool:
-    if key not in _cache:
-        return False
-    return (datetime.utcnow() - _cache[key]["ts"]).seconds < _cache_ttl
+_cache = SimpleCache(ttl=3600)
 
 
 def _gemini_search(query: str, limit: int = 6) -> list[dict]:
@@ -87,35 +81,13 @@ def _fetch_wikipedia_image(name: str) -> str | None:
     return None
 
 
-def _fetch_spotify_oembed(spotify_id: str) -> dict | None:
-    """Spotify oEmbed API로 아티스트 이름 + 이미지 가져오기. 가장 안정적."""
-    if not spotify_id:
-        return None
-    try:
-        import httpx
-        r = httpx.get(
-            f"https://open.spotify.com/oembed?url=https://open.spotify.com/artist/{spotify_id}",
-            headers={"User-Agent": "Mozilla/5.0"},
-            timeout=8,
-            follow_redirects=True,
-        )
-        if r.status_code == 200:
-            data = r.json()
-            return {
-                "name": data.get("title", ""),
-                "image": data.get("thumbnail_url"),
-            }
-    except Exception:
-        pass
-    return None
-
 
 @router.get("/artist")
 def search_artist(q: str, limit: int = 6):
     """아티스트 이름으로 검색."""
     cache_key = f"search_{q}_{limit}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     results = []
 
@@ -153,7 +125,7 @@ def search_artist(q: str, limit: int = 6):
         })
 
     result = {"query": q, "results": results, "count": len(results)}
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result
 
 
@@ -161,8 +133,8 @@ def search_artist(q: str, limit: int = 6):
 def get_artist_profile(artist_name: str):
     """아티스트 이름으로 상세 프로필 조회. Spotify 이미지 + Gemini 소개."""
     cache_key = f"profile_{artist_name}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     result = {"name": artist_name, "spotify_id": "", "image": None}
 
@@ -199,5 +171,5 @@ def get_artist_profile(artist_name: str):
         if image:
             result["image"] = image
 
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result

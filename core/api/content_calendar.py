@@ -9,17 +9,11 @@ import json
 from datetime import datetime, timedelta
 from fastapi import APIRouter
 from pydantic import BaseModel
+from core.api.cache import SimpleCache
 
 router = APIRouter(prefix="/api/content-calendar", tags=["content-calendar"])
 
-_cache = {}
-_cache_ttl = 3600  # 1시간
-
-
-def _is_fresh(key: str) -> bool:
-    if key not in _cache:
-        return False
-    return (datetime.utcnow() - _cache[key]["ts"]).seconds < _cache_ttl
+_cache = SimpleCache(ttl=3600)
 
 
 # ─── 요청 모델 ───
@@ -313,13 +307,13 @@ _TEMPLATES = {
 def generate_calendar(req: CalendarRequest):
     """콘텐츠 캘린더 생성 — D-14 ~ D+30 SNS 플랜."""
     cache_key = f"calendar_{req.artist_name}_{req.track_title}_{req.release_date}_{req.market}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     result = _generate_calendar(req)
     result["updated"] = datetime.utcnow().isoformat()
 
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result
 
 

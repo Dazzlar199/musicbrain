@@ -8,11 +8,11 @@ import json
 from pathlib import Path
 from datetime import datetime
 from fastapi import APIRouter
+from core.api.cache import SimpleCache
 
 router = APIRouter(prefix="/api/playlists", tags=["playlists"])
 
-_cache = {}
-_cache_ttl = 1800  # 30분
+_cache = SimpleCache(ttl=1800)
 
 DATA_DIR = Path(__file__).parent.parent.parent / "data"
 PLAYLIST_HISTORY_FILE = DATA_DIR / "playlist_history.json"
@@ -43,12 +43,6 @@ TRACKED_PLAYLISTS = {
     "37i9dQZF1DX1UNayylTMOT": {"name": "Hot Hits Japan", "market": "JP", "type": "editorial"},
     "37i9dQZF1DX18jTM2l2fJY": {"name": "Pop Hits Asia", "market": "SEA", "type": "editorial"},
 }
-
-
-def _is_fresh(key: str) -> bool:
-    if key not in _cache:
-        return False
-    return (datetime.utcnow() - _cache[key]["ts"]).seconds < _cache_ttl
 
 
 def _load_history() -> dict:
@@ -104,8 +98,8 @@ def list_tracked_playlists():
 def scan_artist_placements(artist_name: str):
     """아티스트가 어떤 플레이리스트에 있는지 스캔."""
     cache_key = f"playlist_scan_{artist_name}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     placements = []
     scanned = 0
@@ -145,7 +139,7 @@ def scan_artist_placements(artist_name: str):
         "updated": datetime.utcnow().isoformat(),
     }
 
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result
 
 
@@ -159,8 +153,8 @@ def compare_playlist_presence(artists: str):
     results = []
     for name in names:
         cache_key = f"playlist_scan_{name}"
-        if _is_fresh(cache_key):
-            data = _cache[cache_key]["data"]
+        if _cache.is_fresh(cache_key):
+            data = _cache.get(cache_key)
         else:
             data = scan_artist_placements(name)
 

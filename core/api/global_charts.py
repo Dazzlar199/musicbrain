@@ -4,27 +4,21 @@ from pathlib import Path
 from fastapi import APIRouter
 from datetime import datetime
 import pandas as pd
+from core.api.cache import SimpleCache
 
 router = APIRouter(prefix="/api/charts", tags=["charts"])
 
-_cache = {}
-_cache_ttl = 3600  # 1시간 캐시 — 차트는 자주 안 바뀜
+_cache = SimpleCache(ttl=3600)
 
 KAGGLE_CHARTS = Path(__file__).parent.parent.parent / "data" / "kaggle" / "charts" / "universal_top_spotify_songs.csv"
-
-
-def _is_fresh(key: str) -> bool:
-    if key not in _cache:
-        return False
-    return (datetime.utcnow() - _cache[key]["ts"]).seconds < _cache_ttl
 
 
 # ─── 한국 차트 (실시간) ───
 
 @router.get("/melon")
 def melon_chart(limit: int = 50):
-    if _is_fresh("melon"):
-        return _cache["melon"]["data"]
+    if _cache.is_fresh("melon"):
+        return _cache.get("melon")
     try:
         from melon import ChartData
         chart = ChartData()
@@ -32,7 +26,7 @@ def melon_chart(limit: int = 50):
                     "image": getattr(e, "image", None)} for e in chart.entries[:limit]]
         result = {"platform": "멜론", "country": "KR", "entries": entries,
                   "count": len(entries), "updated": datetime.utcnow().isoformat(), "live": True}
-        _cache["melon"] = {"data": result, "ts": datetime.utcnow()}
+        _cache.set("melon", result)
         return result
     except Exception as e:
         return {"platform": "멜론", "error": str(e), "entries": [], "live": False}
@@ -40,8 +34,8 @@ def melon_chart(limit: int = 50):
 
 @router.get("/bugs")
 def bugs_chart(limit: int = 50):
-    if _is_fresh("bugs"):
-        return _cache["bugs"]["data"]
+    if _cache.is_fresh("bugs"):
+        return _cache.get("bugs")
     try:
         from bugs import ChartData
         chart = ChartData()
@@ -49,7 +43,7 @@ def bugs_chart(limit: int = 50):
                     "image": getattr(e, "image", None)} for e in chart.entries[:limit]]
         result = {"platform": "벅스", "country": "KR", "entries": entries,
                   "count": len(entries), "updated": datetime.utcnow().isoformat(), "live": True}
-        _cache["bugs"] = {"data": result, "ts": datetime.utcnow()}
+        _cache.set("bugs", result)
         return result
     except Exception as e:
         return {"platform": "벅스", "error": str(e), "entries": [], "live": False}
@@ -60,8 +54,8 @@ def bugs_chart(limit: int = 50):
 @router.get("/billboard")
 def billboard_chart(chart_name: str = "hot-100", limit: int = 50):
     cache_key = f"billboard_{chart_name}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
     try:
         import billboard
         chart = billboard.ChartData(chart_name)
@@ -70,7 +64,7 @@ def billboard_chart(chart_name: str = "hot-100", limit: int = 50):
                     "image": getattr(e, "image", None)} for e in chart.entries[:limit]]
         result = {"platform": f"Billboard {chart_name}", "country": "US", "entries": entries,
                   "count": len(entries), "updated": datetime.utcnow().isoformat(), "live": True}
-        _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+        _cache.set(cache_key, result)
         return result
     except Exception as e:
         return {"platform": f"Billboard {chart_name}", "error": str(e), "entries": [], "live": False}
@@ -82,8 +76,8 @@ def billboard_chart(chart_name: str = "hot-100", limit: int = 50):
 def spotify_chart(country: str = "KR", limit: int = 50):
     """Spotify 차트 — 72개국 차트 데이터에서 최신 스냅샷."""
     cache_key = f"spotify_{country}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     if not KAGGLE_CHARTS.exists():
         return {"platform": f"Spotify {country}", "error": "차트 데이터 없음", "entries": []}
@@ -115,7 +109,7 @@ def spotify_chart(country: str = "KR", limit: int = 50):
         result = {"platform": f"Spotify {country}", "country": country.upper(),
                   "snapshot_date": latest, "entries": entries,
                   "count": len(entries), "live": False}
-        _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+        _cache.set(cache_key, result)
         return result
     except Exception as e:
         return {"platform": f"Spotify {country}", "error": str(e), "entries": []}
@@ -150,8 +144,8 @@ def spotify_live(country: str = "KR", limit: int = 50):
     """Spotify Top 50 실시간 — API 키 없이 직접 수집."""
     country = country.upper()
     cache_key = f"spotify_live_{country}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     if country not in SPOTIFY_PLAYLISTS:
         return {"error": f"{country} 차트 미지원. 지원 국가: {list(SPOTIFY_PLAYLISTS.keys())}"}
@@ -181,7 +175,7 @@ def spotify_live(country: str = "KR", limit: int = 50):
             "entries": entries, "count": len(entries),
             "updated": datetime.utcnow().isoformat(), "live": True,
         }
-        _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+        _cache.set(cache_key, result)
         return result
     except Exception as e:
         return {"platform": f"Spotify {label}", "error": str(e), "entries": [], "live": False}

@@ -8,17 +8,11 @@ import os
 import json
 from datetime import datetime, timedelta
 from fastapi import APIRouter
+from core.api.cache import SimpleCache
 
 router = APIRouter(prefix="/api/release-timing", tags=["release-timing"])
 
-_cache = {}
-_cache_ttl = 3600  # 1시간
-
-
-def _is_fresh(key: str) -> bool:
-    if key not in _cache:
-        return False
-    return (datetime.utcnow() - _cache[key]["ts"]).seconds < _cache_ttl
+_cache = SimpleCache(ttl=3600)
 
 
 def _get_upcoming_releases() -> list[dict]:
@@ -127,15 +121,15 @@ def _analyze_timing(market: str, genre: str) -> dict:
 def analyze_release_timing(market: str = "kr", genre: str = ""):
     """릴리스 타이밍 분석 — 향후 8주 경쟁 밀도."""
     cache_key = f"timing_{market}_{genre}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     result = _analyze_timing(market, genre)
     result["market"] = market
     result["genre"] = genre or "K-pop"
     result["updated"] = datetime.utcnow().isoformat()
 
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result
 
 
@@ -143,10 +137,10 @@ def analyze_release_timing(market: str = "kr", genre: str = ""):
 def current_releases():
     """현재 주요 플레이리스트의 신곡 목록."""
     cache_key = "current_releases"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     releases = _get_upcoming_releases()
     result = {"releases": releases, "count": len(releases), "updated": datetime.utcnow().isoformat()}
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result

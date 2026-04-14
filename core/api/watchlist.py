@@ -11,23 +11,17 @@ from datetime import datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
+from core.api.cache import SimpleCache
 
-from core.api.buzz import _google_trends, _reddit_buzz, _naver_news
+from core.api.buzz import _google_trends, _reddit_buzz, _google_news
 
 router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
 
-_cache = {}
-_cache_ttl = 1800  # 30분
+_cache = SimpleCache(ttl=1800)
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 WATCHLIST_FILE = DATA_DIR / "watchlist.json"
 HISTORY_FILE = DATA_DIR / "watchlist_history.json"
-
-
-def _is_fresh(key: str) -> bool:
-    if key not in _cache:
-        return False
-    return (datetime.utcnow() - _cache[key]["ts"]).seconds < _cache_ttl
 
 
 # ─── 파일 I/O ───
@@ -229,8 +223,8 @@ def list_watchlist():
 def scan_watchlist():
     """워치리스트 전체 스캔 — 버즈 수집 + 변화 감지."""
     cache_key = "watchlist_scan"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     watchlist = _load_watchlist()
     history = _load_history()
@@ -246,7 +240,7 @@ def scan_watchlist():
             # 버즈 데이터 수집
             trends = _google_trends(name)
             reddit = _reddit_buzz(name, limit=10)
-            news = _naver_news(name, limit=10)
+            news = _google_news(name, limit=10)
 
             score = _calc_buzz_score(trends, reddit, news)
 
@@ -302,7 +296,7 @@ def scan_watchlist():
         "scanned_at": now.isoformat(),
     }
 
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result
 
 
@@ -310,8 +304,8 @@ def scan_watchlist():
 def get_alerts():
     """마지막 스캔 이후 감지된 알림 목록."""
     cache_key = "watchlist_scan"
-    if cache_key in _cache:
-        scan_data = _cache[cache_key]["data"]
+    scan_data = _cache.get(cache_key)
+    if scan_data:
         return {
             "alerts": scan_data.get("alerts", []),
             "count": scan_data.get("alerts_detected", 0),

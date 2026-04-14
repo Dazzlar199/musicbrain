@@ -10,17 +10,11 @@ import feedparser
 from pathlib import Path
 from datetime import datetime, timedelta
 from fastapi import APIRouter
+from core.api.cache import SimpleCache
 
 router = APIRouter(prefix="/api/buzz", tags=["buzz"])
 
-_cache = {}
-_cache_ttl = 1800  # 30분 캐시
-
-
-def _is_fresh(key: str) -> bool:
-    if key not in _cache:
-        return False
-    return (datetime.utcnow() - _cache[key]["ts"]).seconds < _cache_ttl
+_cache = SimpleCache(ttl=1800)
 
 
 # ─── Google Trends ───
@@ -93,8 +87,8 @@ def _reddit_buzz(keyword: str, limit: int = 20) -> dict:
 
 # ─── 네이버 뉴스 ───
 
-def _naver_news(keyword: str, limit: int = 20) -> dict:
-    """네이버 뉴스 검색 (RSS)."""
+def _google_news(keyword: str, limit: int = 20) -> dict:
+    """Google News 검색 (RSS)."""
     try:
         import urllib.parse
         url = f"https://news.google.com/rss/search?q={urllib.parse.quote(keyword)}&hl=ko&gl=KR&ceid=KR:ko"
@@ -357,13 +351,13 @@ def _gemini_buzz_summary(keyword: str, reddit_data: dict, news_data: dict, x_dat
 def get_buzz(artist_name: str):
     """아티스트 버즈 종합 리포트."""
     cache_key = f"buzz_{artist_name}"
-    if _is_fresh(cache_key):
-        return _cache[cache_key]["data"]
+    if _cache.is_fresh(cache_key):
+        return _cache.get(cache_key)
 
     # 데이터 수집
     trends = _google_trends(artist_name)
     reddit = _reddit_buzz(artist_name)
-    news = _naver_news(artist_name)
+    news = _google_news(artist_name)
     youtube = _youtube_buzz(artist_name)
     x = _x_buzz(artist_name)
 
@@ -399,7 +393,7 @@ def get_buzz(artist_name: str):
         "updated": datetime.utcnow().isoformat(),
     }
 
-    _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
+    _cache.set(cache_key, result)
     return result
 
 
@@ -414,12 +408,12 @@ def compare_buzz(artist_name: str, vs: str = ""):
 
     for name in artists[:5]:  # 최대 5명
         cache_key = f"buzz_{name}"
-        if _is_fresh(cache_key):
-            data = _cache[cache_key]["data"]
+        if _cache.is_fresh(cache_key):
+            data = _cache.get(cache_key)
         else:
             trends = _google_trends(name, days=7)
             reddit = _reddit_buzz(name, limit=10)
-            news = _naver_news(name, limit=5)
+            news = _google_news(name, limit=5)
 
             score = 0
             score += min(trends.get("avg", 0), 30)
@@ -428,7 +422,7 @@ def compare_buzz(artist_name: str, vs: str = ""):
             score = min(score, 100)
 
             data = {"artist": name, "score": score, "trends": trends}
-            _cache[cache_key] = {"data": data, "ts": datetime.utcnow()}
+            _cache.set(cache_key, data)
 
         results.append({
             "artist": data["artist"],
