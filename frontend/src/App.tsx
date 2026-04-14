@@ -20,6 +20,8 @@ import Rights from "./pages/Rights";
 import Buzz from "./pages/Buzz";
 import PlaylistTracker from "./pages/PlaylistTracker";
 import ReleaseTiming from "./pages/ReleaseTiming";
+import ContentCalendar from "./pages/ContentCalendar";
+import Watchlist from "./pages/Watchlist";
 
 function Home() {
   // 이미 사용한 적 있으면 바로 스튜디오로
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="/buzz" element={<Buzz />} />
           <Route path="/playlists" element={<PlaylistTracker />} />
           <Route path="/release-timing" element={<ReleaseTiming />} />
+          <Route path="/content-calendar" element={<ContentCalendar />} />
+          <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

@@ -66,6 +66,8 @@ from core.api.rights import router as rights_router
 from core.api.buzz import router as buzz_router
 from core.api.playlists import router as playlists_router
 from core.api.release_timing import router as timing_router
+from core.api.content_calendar import router as calendar_router
+from core.api.watchlist import router as watchlist_router
 
 app = FastAPI(title="Music Brain", version="0.2.0")
 
@@ -89,6 +91,8 @@ app.include_router(rights_router)
 app.include_router(buzz_router)
 app.include_router(playlists_router)
 app.include_router(timing_router)
+app.include_router(calendar_router)
+app.include_router(watchlist_router)
 
 # Serve static files
 STATIC_DIR = Path(__file__).parent / "static"

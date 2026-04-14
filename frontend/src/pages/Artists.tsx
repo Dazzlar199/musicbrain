@@ -155,12 +155,14 @@ export function Nav({ nav, active }: { nav: ReturnType<typeof useNavigate>; acti
       { key: "buzz", label: "팬덤 버즈", path: "/buzz" },
       { key: "playlists", label: "플레이리스트", path: "/playlists" },
       { key: "timing", label: "릴리스 타이밍", path: "/release-timing" },
+      { key: "watchlist", label: "경쟁사 워치", path: "/watchlist" },
       { key: "trends", label: "차트·트렌드", path: "/trends" },
     ]},
     { label: "운영", items: [
       { key: "artists", label: "아티스트", path: "/artists" },
       { key: "projects", label: "프로젝트", path: "/projects" },
       { key: "campaigns", label: "캠페인", path: "/campaigns" },
+      { key: "calendar", label: "컨텐츠 캘린더", path: "/content-calendar" },
       { key: "demos", label: "데모 관리", path: "/demos" },
     ]},
     { label: "관리", items: [
