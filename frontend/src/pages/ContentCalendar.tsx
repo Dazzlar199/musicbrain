@@ -16,14 +16,13 @@ interface CalendarItem {
 }
 
 interface CalendarResult {
-  artist: string;
-  track: string;
+  artist_name: string;
+  track_title: string;
   release_date: string;
-  phases: {
-    pre_release: CalendarItem[];
-    release_day: CalendarItem[];
-    post_release: CalendarItem[];
-  };
+  calendar: CalendarItem[];
+  summary?: string;
+  total_posts?: number;
+  phase_summary?: { pre_release?: string; release_day?: string; post_release?: string };
 }
 
 const MARKETS = [
@@ -379,14 +378,11 @@ export default function ContentCalendar() {
                 <Calendar size={24} style={{ color: "var(--blue)" }} />
               </div>
               <div>
-                <strong style={{ fontSize: 16 }}>{result.artist} - {result.track}</strong>
+                <strong style={{ fontSize: 16 }}>{result.artist_name} - {result.track_title}</strong>
                 <p style={{ fontSize: 12, color: "var(--text-disabled)", margin: "2px 0 0" }}>
-                  발매일: {result.release_date} | 총 {
-                    (result.phases.pre_release?.length || 0) +
-                    (result.phases.release_day?.length || 0) +
-                    (result.phases.post_release?.length || 0)
-                  }개 콘텐츠
+                  발매일: {result.release_date} | 총 {result.calendar?.length || 0}개 콘텐츠
                 </p>
+                {result.summary && <p style={{ fontSize: 12, color: "var(--text-tertiary)", margin: "4px 0 0" }}>{result.summary}</p>}
               </div>
               <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
                 {[
@@ -405,9 +401,9 @@ export default function ContentCalendar() {
               </div>
             </div>
 
-            {renderPhase("사전 홍보 (D-14 ~ D-1)", result.phases.pre_release)}
-            {renderPhase("발매일 (D-Day)", result.phases.release_day)}
-            {renderPhase("사후 관리 (D+1 ~ D+30)", result.phases.post_release)}
+            {renderPhase("사전 홍보 (D-14 ~ D-1)", (result.calendar || []).filter(c => c.d_day.startsWith("D-")))}
+            {renderPhase("발매일 (D-Day)", (result.calendar || []).filter(c => c.d_day === "D-Day"))}
+            {renderPhase("사후 관리 (D+1 ~ D+30)", (result.calendar || []).filter(c => c.d_day.startsWith("D+")))}
           </div>
         )}
 
