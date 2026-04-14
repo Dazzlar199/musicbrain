@@ -54,6 +54,39 @@ JSON 배열로만 답해. 마크다운 쓰지 마.
         return []
 
 
+def _fetch_wikipedia_image(name: str) -> str | None:
+    """Wikipedia에서 아티스트 이미지 가져오기. 가장 안정적."""
+    try:
+        import httpx
+        # 영어 위키 먼저
+        for wiki_name in [name, name.replace(" ", "_")]:
+            r = httpx.get(
+                f"https://en.wikipedia.org/api/rest_v1/page/summary/{wiki_name}",
+                headers={"User-Agent": "MusicBrain/0.2"},
+                timeout=8, follow_redirects=True,
+            )
+            if r.status_code == 200:
+                data = r.json()
+                thumb = data.get("thumbnail", {}).get("source")
+                if thumb:
+                    # 더 큰 이미지로 변환 (330px → 500px)
+                    return thumb.replace("/330px-", "/500px-")
+        # 한국어 위키도 시도
+        r = httpx.get(
+            f"https://ko.wikipedia.org/api/rest_v1/page/summary/{name}",
+            headers={"User-Agent": "MusicBrain/0.2"},
+            timeout=8, follow_redirects=True,
+        )
+        if r.status_code == 200:
+            data = r.json()
+            thumb = data.get("thumbnail", {}).get("source")
+            if thumb:
+                return thumb.replace("/330px-", "/500px-")
+    except Exception:
+        pass
+    return None
+
+
 def _fetch_spotify_oembed(spotify_id: str) -> dict | None:
     """Spotify oEmbed API로 아티스트 이름 + 이미지 가져오기. 가장 안정적."""
     if not spotify_id:
@@ -95,11 +128,16 @@ def search_artist(q: str, limit: int = 6):
         if not name:
             continue
 
+        # Wikipedia에서 이미지 가져오기 (첫 번째 결과만)
+        image = None
+        if len(results) == 0:  # 첫 결과만 이미지 로드 (속도)
+            image = _fetch_wikipedia_image(name)
+
         results.append({
             "name": local_name or name,
             "name_en": name,
             "spotify_id": "",
-            "image": None,
+            "image": image,
             "genre": item.get("genre", ""),
             "source": "gemini",
         })
@@ -154,6 +192,12 @@ def get_artist_profile(artist_name: str):
             result["genre"] = data.get("genre", "")
     except Exception:
         pass
+
+    # Wikipedia 이미지
+    if not result.get("image"):
+        image = _fetch_wikipedia_image(artist_name)
+        if image:
+            result["image"] = image
 
     _cache[cache_key] = {"data": result, "ts": datetime.utcnow()}
     return result
