@@ -9,14 +9,9 @@ import Artists from "./pages/Artists";
 import ArtistDetail from "./pages/ArtistDetail";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
-import Campaigns from "./pages/Campaigns";
-import Scouting from "./pages/Scouting";
 import Trends from "./pages/Trends";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
-import Demos from "./pages/Demos";
-import ComparePage from "./pages/Compare";
-import Rights from "./pages/Rights";
 import Buzz from "./pages/Buzz";
 import PlaylistTracker from "./pages/PlaylistTracker";
 import ReleaseTiming from "./pages/ReleaseTiming";
@@ -24,7 +19,6 @@ import ContentCalendar from "./pages/ContentCalendar";
 import Watchlist from "./pages/Watchlist";
 
 function Home() {
-  // 이미 사용한 적 있으면 바로 스튜디오로
   const visited = localStorage.getItem("visited");
   if (visited) return <Navigate to="/studio" replace />;
   localStorage.setItem("visited", "1");
@@ -43,12 +37,7 @@ export default function App() {
           <Route path="/artists/:id" element={<ArtistDetail />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:id" element={<ProjectDetail />} />
-          <Route path="/campaigns" element={<Campaigns />} />
-          <Route path="/scouting" element={<Scouting />} />
           <Route path="/trends" element={<Trends />} />
-          <Route path="/demos" element={<Demos />} />
-          <Route path="/compare" element={<ComparePage />} />
-          <Route path="/rights" element={<Rights />} />
           <Route path="/buzz" element={<Buzz />} />
           <Route path="/playlists" element={<PlaylistTracker />} />
           <Route path="/release-timing" element={<ReleaseTiming />} />

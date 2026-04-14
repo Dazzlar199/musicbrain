@@ -52,17 +52,13 @@ from core.gemini_listen import listen_and_analyze
 from core.db.database import init_db
 from core.api.artists import router as artists_router
 from core.api.projects import router as projects_router
-from core.api.campaigns import router as campaigns_router
-from core.api.scouting import router as scouting_router
 from core.api.trends import router as trends_router
 from core.api.global_charts import router as charts_router
 from core.api.track_stats import router as track_stats_router
 from core.api.artist_crawler import router as crawler_router
 from core.api.artist_search import router as search_router
-from core.api.demos import router as demos_router
 from core.api.alerts import router as alerts_router
 from core.auth import router as auth_router
-from core.api.rights import router as rights_router
 from core.api.buzz import router as buzz_router
 from core.api.playlists import router as playlists_router
 from core.api.release_timing import router as timing_router
@@ -77,17 +73,13 @@ init_db()
 # Register API routers
 app.include_router(artists_router)
 app.include_router(projects_router)
-app.include_router(campaigns_router)
-app.include_router(scouting_router)
 app.include_router(trends_router)
 app.include_router(charts_router)
 app.include_router(track_stats_router)
 app.include_router(crawler_router)
 app.include_router(search_router)
-app.include_router(demos_router)
-app.include_router(auth_router)
 app.include_router(alerts_router)
-app.include_router(rights_router)
+app.include_router(auth_router)
 app.include_router(buzz_router)
 app.include_router(playlists_router)
 app.include_router(timing_router)
