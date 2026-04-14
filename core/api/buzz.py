@@ -167,52 +167,75 @@ def _youtube_buzz(keyword: str, limit: int = 10) -> dict:
 def _x_buzz(keyword: str, limit: int = 20) -> dict:
     """X(트위터) 버즈. twikit 계정 있으면 실시간, 없으면 Gemini 분석."""
 
-    # 방법 1: twikit (계정 있을 때)
-    x_user = os.getenv("X_USERNAME")
-    x_pass = os.getenv("X_PASSWORD")
-    x_email = os.getenv("X_EMAIL")
+    # 방법 1: Playwright + Chrome 쿠키 (로컬에서 X 로그인 되어 있을 때)
+    try:
+        import browser_cookie3
+        from playwright.sync_api import sync_playwright
 
-    if x_user and x_pass:
-        try:
-            import asyncio
-            from twikit import Client as TwikitClient
+        chrome_cookie_path = os.path.expanduser("~/Library/Application Support/Google/Chrome/Profile 1/Cookies")
+        if not os.path.exists(chrome_cookie_path):
+            chrome_cookie_path = os.path.expanduser("~/Library/Application Support/Google/Chrome/Default/Cookies")
 
-            async def _search():
-                client = TwikitClient("ko")
-                cookie_path = Path(__file__).parent.parent.parent / "data" / "x_cookies.json"
-                try:
-                    if cookie_path.exists():
-                        client.load_cookies(str(cookie_path))
-                    else:
-                        await client.login(auth_info_1=x_user, auth_info_2=x_email, password=x_pass)
-                        client.save_cookies(str(cookie_path))
-                except Exception:
-                    await client.login(auth_info_1=x_user, auth_info_2=x_email, password=x_pass)
-                    client.save_cookies(str(cookie_path))
+        if os.path.exists(chrome_cookie_path):
+            cj = browser_cookie3.chrome(cookie_file=chrome_cookie_path, domain_name=".x.com")
+            cookies = [{"name": c.name, "value": c.value, "domain": c.domain, "path": c.path} for c in cj]
 
-                results = await client.search_tweet(keyword, "Latest", count=limit)
+            # auth_token 있는지 확인
+            has_auth = any(c["name"] == "auth_token" for c in cookies)
+            if has_auth:
+                import urllib.parse
+                with sync_playwright() as p:
+                    browser = p.chromium.launch(headless=True)
+                    context = browser.new_context(user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+                    context.add_cookies(cookies)
+
+                    page = context.new_page()
+                    q = urllib.parse.quote(keyword)
+                    page.goto(f"https://x.com/search?q={q}&f=live", wait_until="domcontentloaded", timeout=15000)
+                    page.wait_for_selector('article[data-testid="tweet"]', timeout=8000)
+
+                    tweets_raw = page.evaluate("""() => {
+                        const articles = document.querySelectorAll('article[data-testid="tweet"]');
+                        return Array.from(articles).slice(0, """ + str(limit) + """).map(a => {
+                            const text = a.querySelector('[data-testid="tweetText"]')?.textContent || '';
+                            const userEl = a.querySelector('[data-testid="User-Name"]');
+                            const user = userEl?.querySelector('span')?.textContent || '';
+                            const handle = userEl?.querySelectorAll('span')[3]?.textContent || '';
+                            const time = a.querySelector('time')?.getAttribute('datetime') || '';
+                            const link = a.querySelector('a[href*="/status/"]')?.href || '';
+                            const likes = a.querySelector('[data-testid="like"]')?.textContent || '0';
+                            const retweets = a.querySelector('[data-testid="retweet"]')?.textContent || '0';
+                            const replies = a.querySelector('[data-testid="reply"]')?.textContent || '0';
+                            return {text: text.slice(0,200), user, handle, time, url: link, likes, retweets, replies};
+                        });
+                    }""")
+                    browser.close()
+
                 tweets = []
-                for t in results:
+                for t in tweets_raw:
+                    def parse_count(v):
+                        try:
+                            if isinstance(v, (int, float)): return int(v)
+                            v = str(v).strip().replace(",", "")
+                            if "K" in v: return int(float(v.replace("K", "")) * 1000)
+                            if "M" in v: return int(float(v.replace("M", "")) * 1000000)
+                            return int(v) if v else 0
+                        except: return 0
                     tweets.append({
-                        "text": t.text[:200] if t.text else "",
-                        "user": t.user.name if t.user else "",
-                        "handle": f"@{t.user.screen_name}" if t.user else "",
-                        "likes": t.favorite_count or 0,
-                        "retweets": t.retweet_count or 0,
-                        "replies": t.reply_count or 0,
-                        "created": str(t.created_at) if t.created_at else "",
-                        "url": f"https://x.com/{t.user.screen_name}/status/{t.id}" if t.user else "",
+                        "text": t.get("text", ""),
+                        "user": t.get("user", ""),
+                        "handle": t.get("handle", ""),
+                        "likes": parse_count(t.get("likes")),
+                        "retweets": parse_count(t.get("retweets")),
+                        "replies": parse_count(t.get("replies")),
+                        "created": t.get("time", ""),
+                        "url": t.get("url", ""),
                     })
-                return tweets
 
-            loop = asyncio.new_event_loop()
-            tweets = loop.run_until_complete(_search())
-            loop.close()
-
-            total_engagement = sum(t["likes"] + t["retweets"] + t["replies"] for t in tweets)
-            return {"tweets": tweets, "count": len(tweets), "total_engagement": total_engagement, "available": True, "source": "twikit"}
-        except Exception:
-            pass
+                total_engagement = sum(t["likes"] + t["retweets"] + t["replies"] for t in tweets)
+                return {"tweets": tweets, "count": len(tweets), "total_engagement": total_engagement, "available": True, "source": "x_live"}
+    except Exception:
+        pass
 
     # 방법 2: Gemini가 X 트렌드 분석 (계정 없어도 작동)
     try:
