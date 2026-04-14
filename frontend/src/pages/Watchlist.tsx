@@ -6,20 +6,20 @@ import { useArtist } from "../context";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface WatchlistItem {
-  name: string;
-  buzz_score: number;
-  change: number;
+  artist_name: string;
+  last_score: number | null;
+  score_change: number | null;
   priority: "high" | "medium" | "low";
-  last_scanned: string;
+  last_scan: string | null;
+  added_at: string | null;
   history?: Array<{ date: string; score: number }>;
 }
 
 interface AlertItem {
-  id: string;
   type: "buzz_spike" | "buzz_drop" | "new_playlist" | "trending";
   artist: string;
   message: string;
-  timestamp: string;
+  timestamp?: string;
 }
 
 function scoreColor(s: number): string {
@@ -145,7 +145,7 @@ export default function Watchlist() {
       const r = await fetch("/api/watchlist/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: addName.trim(), priority: addPriority }),
+        body: JSON.stringify({ artist_name: addName.trim(), priority: addPriority }),
       });
       if (!r.ok) throw new Error("추가 실패");
       setAddName("");
@@ -157,8 +157,8 @@ export default function Watchlist() {
   const handleDelete = async (name: string) => {
     try {
       await fetch(`/api/watchlist/${encodeURIComponent(name)}`, { method: "DELETE" });
-      setItems(prev => prev.filter(i => i.name !== name));
-      if (selected?.name === name) setSelected(null);
+      setItems(prev => prev.filter(i => i.artist_name !== name));
+      if (selected?.artist_name === name) setSelected(null);
     } catch { }
   };
 
@@ -177,7 +177,7 @@ export default function Watchlist() {
     if (!item.history || item.history.length === 0) {
       setHistoryLoading(true);
       try {
-        const r = await fetch(`/api/watchlist/${encodeURIComponent(item.name)}/history`);
+        const r = await fetch(`/api/watchlist/${encodeURIComponent(item.artist_name)}/history`);
         if (r.ok) {
           const d = await r.json();
           setSelected(prev => prev ? { ...prev, history: d.history || [] } : null);
@@ -279,10 +279,10 @@ export default function Watchlist() {
           <section style={{ marginBottom: 20 }}>
             <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--text-primary)" }}>최근 알림</p>
             <div style={{ display: "grid", gap: 6 }}>
-              {alerts.slice(0, 5).map(a => {
+              {alerts.slice(0, 5).map((a, idx) => {
                 const meta = alertMeta(a.type);
                 return (
-                  <div key={a.id} style={{
+                  <div key={idx} style={{
                     display: "flex", alignItems: "center", gap: 12,
                     padding: "10px 14px", borderRadius: 10,
                     background: meta.bg,
@@ -299,9 +299,11 @@ export default function Watchlist() {
                       </div>
                       <p style={{ fontSize: 12, color: "var(--text-secondary)", margin: "2px 0 0" }}>{a.message}</p>
                     </div>
-                    <span style={{ fontSize: 11, color: "var(--text-disabled)", whiteSpace: "nowrap" }}>
-                      {new Date(a.timestamp).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </span>
+                    {a.timestamp && (
+                      <span style={{ fontSize: 11, color: "var(--text-disabled)", whiteSpace: "nowrap" }}>
+                        {new Date(a.timestamp).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -333,9 +335,9 @@ export default function Watchlist() {
           <div style={{ display: "grid", gap: 8 }}>
             {items.map(item => {
               const pMeta = priorityColor(item.priority);
-              const isSelected = selected?.name === item.name;
+              const isSelected = selected?.artist_name === item.artist_name;
               return (
-                <div key={item.name}>
+                <div key={item.artist_name}>
                   <div
                     onClick={() => handleSelect(item)}
                     style={{
@@ -351,25 +353,25 @@ export default function Watchlist() {
                     {/* Buzz score circle */}
                     <div style={{
                       width: 48, height: 48, borderRadius: "50%",
-                      border: `3px solid ${scoreColor(item.buzz_score)}`,
+                      border: `3px solid ${scoreColor(item.last_score ?? 0)}`,
                       display: "grid", placeItems: "center",
-                      fontSize: 16, fontWeight: 800, color: scoreColor(item.buzz_score),
+                      fontSize: 16, fontWeight: 800, color: scoreColor(item.last_score ?? 0),
                       flexShrink: 0,
                     }}>
-                      {item.buzz_score}
+                      {item.last_score}
                     </div>
 
                     {/* Name + meta */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong style={{ fontSize: 15 }}>{item.name}</strong>
+                      <strong style={{ fontSize: 15 }}>{item.artist_name}</strong>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
                         <span style={{
                           fontSize: 10, padding: "1px 6px", borderRadius: 4,
                           background: pMeta.bg, color: pMeta.text, fontWeight: 600,
                         }}>{pMeta.label}</span>
-                        {item.last_scanned && (
+                        {item.last_scan && (
                           <span style={{ fontSize: 11, color: "var(--text-disabled)" }}>
-                            스캔: {new Date(item.last_scanned).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            스캔: {new Date(item.last_scan).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </span>
                         )}
                       </div>
@@ -377,22 +379,22 @@ export default function Watchlist() {
 
                     {/* Change indicator */}
                     <div style={{ textAlign: "right", flexShrink: 0 }}>
-                      {item.change !== 0 && (
+                      {item.score_change !== 0 && (
                         <span style={{
                           fontSize: 14, fontWeight: 700,
-                          color: item.change > 0 ? "#22c55e" : "#ef4444",
+                          color: (item.score_change ?? 0) > 0 ? "#22c55e" : "#ef4444",
                         }}>
-                          {item.change > 0 ? "\u2191" : "\u2193"}{Math.abs(item.change)}
+                          {(item.score_change ?? 0) > 0 ? "\u2191" : "\u2193"}{Math.abs(item.score_change ?? 0)}
                         </span>
                       )}
-                      {item.change === 0 && (
+                      {item.score_change === 0 && (
                         <span style={{ fontSize: 13, color: "var(--text-disabled)" }}>-</span>
                       )}
                     </div>
 
                     {/* Delete */}
                     <button
-                      onClick={e => { e.stopPropagation(); handleDelete(item.name); }}
+                      onClick={e => { e.stopPropagation(); handleDelete(item.artist_name); }}
                       style={{
                         border: "none", background: "none", cursor: "pointer",
                         color: "var(--text-disabled)", padding: 4, borderRadius: 6,
@@ -410,7 +412,7 @@ export default function Watchlist() {
                   {isSelected && (
                     <div className="subpanel" style={{ padding: 20, marginTop: 8, marginBottom: 4 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
-                        {item.name} 버즈 추이
+                        {item.artist_name} 버즈 추이
                       </p>
                       {historyLoading ? (
                         <div style={{ textAlign: "center", padding: 40, color: "var(--text-disabled)" }}>
@@ -423,7 +425,7 @@ export default function Watchlist() {
                             <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={d => d.slice(5)} />
                             <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
                             <Tooltip contentStyle={{ borderRadius: 10, border: "1px solid var(--border-light)", fontSize: 12 }} />
-                            <Line type="monotone" dataKey="score" stroke={scoreColor(item.buzz_score)} strokeWidth={2} dot={{ r: 3 }} name="버즈 스코어" />
+                            <Line type="monotone" dataKey="score" stroke={scoreColor(item.last_score ?? 0)} strokeWidth={2} dot={{ r: 3 }} name="버즈 스코어" />
                           </LineChart>
                         </ResponsiveContainer>
                       ) : (

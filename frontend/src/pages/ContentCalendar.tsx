@@ -129,10 +129,10 @@ export default function ContentCalendar() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          artist: artistName.trim(),
-          track: trackTitle.trim(),
+          artist_name: artistName.trim(),
+          track_title: trackTitle.trim(),
           release_date: releaseDate,
-          markets: selectedMarkets,
+          market: selectedMarkets[0] || "kr",
           platforms: selectedPlatforms,
         }),
       });
@@ -155,12 +155,11 @@ export default function ContentCalendar() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          artist: artistName.trim(),
-          track: trackTitle.trim() || `${templateKey} 릴리스`,
+          artist_name: artistName.trim(),
+          track_title: trackTitle.trim() || `${templateKey} 릴리스`,
           release_date: releaseDate || new Date(Date.now() + 14 * 86400000).toISOString().split("T")[0],
-          markets: selectedMarkets,
+          market: selectedMarkets[0] || "kr",
           platforms: selectedPlatforms,
-          template: templateKey,
         }),
       });
       if (!r.ok) throw new Error(`서버 오류 (${r.status})`);
