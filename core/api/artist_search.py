@@ -49,33 +49,33 @@ JSON 배열로만 답해. 마크다운 쓰지 마.
 
 
 def _fetch_wikipedia_image(name: str) -> str | None:
-    """Wikipedia에서 아티스트 이미지 가져오기. 가장 안정적."""
+    """Wikipedia에서 아티스트 이미지 가져오기."""
     try:
-        import httpx
+        import urllib.request, urllib.parse, json
+        headers = {"User-Agent": "MusicBrain/0.2 (contact@example.com)"}
         # 영어 위키 먼저
         for wiki_name in [name, name.replace(" ", "_")]:
-            r = httpx.get(
-                f"https://en.wikipedia.org/api/rest_v1/page/summary/{wiki_name}",
-                headers={"User-Agent": "MusicBrain/0.2"},
-                timeout=8, follow_redirects=True,
-            )
-            if r.status_code == 200:
-                data = r.json()
+            url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(wiki_name)}"
+            req = urllib.request.Request(url, headers=headers)
+            try:
+                with urllib.request.urlopen(req, timeout=8) as resp:
+                    data = json.loads(resp.read())
+                    thumb = data.get("thumbnail", {}).get("source")
+                    if thumb:
+                        return thumb.replace("/330px-", "/500px-")
+            except Exception:
+                continue
+        # 한국어 위키도 시도
+        url = f"https://ko.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(name)}"
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read())
                 thumb = data.get("thumbnail", {}).get("source")
                 if thumb:
-                    # 더 큰 이미지로 변환 (330px → 500px)
                     return thumb.replace("/330px-", "/500px-")
-        # 한국어 위키도 시도
-        r = httpx.get(
-            f"https://ko.wikipedia.org/api/rest_v1/page/summary/{name}",
-            headers={"User-Agent": "MusicBrain/0.2"},
-            timeout=8, follow_redirects=True,
-        )
-        if r.status_code == 200:
-            data = r.json()
-            thumb = data.get("thumbnail", {}).get("source")
-            if thumb:
-                return thumb.replace("/330px-", "/500px-")
+        except Exception:
+            pass
     except Exception:
         pass
     return None
