@@ -13,7 +13,7 @@ interface BuzzData {
   reddit: { posts: Array<{ title: string; subreddit: string; score: number; comments: number; url: string; created: string }>; count: number; total_score: number; total_comments: number; top_subreddits: Array<{ name: string; count: number }> };
   news: { articles: Array<{ title: string; source: string; url: string; published: string }>; count: number };
   youtube: { videos: Array<{ title: string; channel: string; views: string; published: string; url: string }>; count: number };
-  x?: { tweets: Array<{ text: string; user: string; handle: string; likes: number; retweets: number; replies: number; created: string; url: string }>; count: number; total_engagement: number; available: boolean };
+  x?: { tweets: Array<{ text: string; user: string; handle: string; likes: number; retweets: number; replies: number; created: string; url: string }>; count: number; total_engagement: number; available: boolean; source?: string; summary?: string; trending_topics?: string[]; sentiment?: string; hashtags?: string[] };
   updated: string;
 }
 
@@ -226,13 +226,36 @@ export default function Buzz() {
               </section>
             )}
 
-            {/* X 미설정 안내 */}
-            {data.x && !data.x.available && (
-              <section className="subpanel" style={{ padding: 20, textAlign: "center" }}>
-                <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>X (트위터) 데이터</p>
-                <p style={{ fontSize: 12, color: "var(--text-disabled)" }}>
-                  환경변수에 X_USERNAME, X_PASSWORD, X_EMAIL을 설정하면 실시간 트윗을 수집합니다
+            {/* X Gemini 분석 (계정 없을 때) */}
+            {data.x?.available && data.x.source === "gemini" && (
+              <section className="subpanel" style={{ padding: 20 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
+                  X (트위터) — AI 분석
                 </p>
+                {data.x.summary && (
+                  <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-secondary)", marginBottom: 12 }}>{data.x.summary}</p>
+                )}
+                {data.x.sentiment && (
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ fontSize: 12, color: "var(--text-disabled)" }}>감성: </span>
+                    <span className="label-badge">{data.x.sentiment}</span>
+                  </div>
+                )}
+                {(data.x.hashtags ?? []).length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                    {(data.x.hashtags ?? []).map((h: string, i: number) => (
+                      <span key={i} className="status-badge status-active" style={{ fontSize: 11 }}>{h}</span>
+                    ))}
+                  </div>
+                )}
+                {(data.x.trending_topics ?? []).length > 0 && (
+                  <div>
+                    <p style={{ fontSize: 12, color: "var(--text-disabled)", marginBottom: 6 }}>화제 토픽</p>
+                    {(data.x.trending_topics ?? []).map((t: string, i: number) => (
+                      <p key={i} style={{ fontSize: 13, margin: "4px 0", paddingLeft: 8, borderLeft: "2px solid var(--blue)" }}>{t}</p>
+                    ))}
+                  </div>
+                )}
               </section>
             )}
 

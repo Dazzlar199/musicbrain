@@ -69,9 +69,14 @@ def _fetch_playlist_tracks(playlist_id: str) -> list[dict]:
         info = client.get_playlist_info(f"https://open.spotify.com/playlist/{playlist_id}")
         tracks = []
         for i, t in enumerate(info.get("tracks", [])):
-            artist = t.get("artist", "")
-            if isinstance(artist, list):
-                artist = ", ".join(a.get("name", "") for a in artist) if artist else ""
+            # artists 배열에서 이름 추출
+            artists = t.get("artists", [])
+            if artists and isinstance(artists, list):
+                artist = ", ".join(a.get("name", "") for a in artists if a.get("name"))
+            else:
+                artist = t.get("artist", "")
+                if isinstance(artist, list):
+                    artist = ", ".join(a.get("name", "") for a in artist if a.get("name"))
             tracks.append({
                 "position": i + 1,
                 "title": t.get("name", ""),
