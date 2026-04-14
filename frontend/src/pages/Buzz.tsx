@@ -13,6 +13,7 @@ interface BuzzData {
   reddit: { posts: Array<{ title: string; subreddit: string; score: number; comments: number; url: string; created: string }>; count: number; total_score: number; total_comments: number; top_subreddits: Array<{ name: string; count: number }> };
   news: { articles: Array<{ title: string; source: string; url: string; published: string }>; count: number };
   youtube: { videos: Array<{ title: string; channel: string; views: string; published: string; url: string }>; count: number };
+  x?: { tweets: Array<{ text: string; user: string; handle: string; likes: number; retweets: number; replies: number; created: string; url: string }>; count: number; total_engagement: number; available: boolean };
   updated: string;
 }
 
@@ -146,6 +147,7 @@ export default function Buzz() {
                 </div>
                 <strong style={{ fontSize: 18 }}>{data.artist}</strong>
                 <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 12, fontSize: 12, color: "var(--text-tertiary)" }}>
+                  {data.x?.available && <span>X {data.x.count}건</span>}
                   <span>Reddit {data.reddit.count}건</span>
                   <span>뉴스 {data.news.count}건</span>
                   <span>YouTube {data.youtube.count}건</span>
@@ -190,6 +192,47 @@ export default function Buzz() {
                     <Area type="monotone" dataKey="value" stroke="#3182f6" fill="url(#buzzGrad)" strokeWidth={2} />
                   </AreaChart>
                 </ResponsiveContainer>
+              </section>
+            )}
+
+            {/* X (트위터) */}
+            {data.x?.available && data.x.tweets.length > 0 && (
+              <section className="subpanel" style={{ padding: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>
+                    X (트위터) — 실시간
+                  </p>
+                  <span style={{ fontSize: 12, color: "var(--text-disabled)" }}>
+                    총 반응 {data.x.total_engagement?.toLocaleString()}
+                  </span>
+                </div>
+                <div style={{ display: "grid", gap: 8, maxHeight: 400, overflow: "auto" }}>
+                  {data.x.tweets.slice(0, 10).map((t: any, i: number) => (
+                    <a key={i} href={t.url} target="_blank" rel="noreferrer"
+                      style={{ display: "block", padding: 12, border: "1px solid var(--border-light)", borderRadius: 10, textDecoration: "none", color: "inherit" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                        <strong style={{ fontSize: 13 }}>{t.user}</strong>
+                        <span style={{ fontSize: 11, color: "var(--text-disabled)" }}>{t.handle}</span>
+                      </div>
+                      <p style={{ fontSize: 13, lineHeight: 1.5, margin: "0 0 6px", color: "var(--text-secondary)" }}>{t.text}</p>
+                      <div style={{ display: "flex", gap: 12, fontSize: 11, color: "var(--text-disabled)" }}>
+                        <span>♡ {t.likes}</span>
+                        <span>↻ {t.retweets}</span>
+                        <span>💬 {t.replies}</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* X 미설정 안내 */}
+            {data.x && !data.x.available && (
+              <section className="subpanel" style={{ padding: 20, textAlign: "center" }}>
+                <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>X (트위터) 데이터</p>
+                <p style={{ fontSize: 12, color: "var(--text-disabled)" }}>
+                  환경변수에 X_USERNAME, X_PASSWORD, X_EMAIL을 설정하면 실시간 트윗을 수집합니다
+                </p>
               </section>
             )}
 

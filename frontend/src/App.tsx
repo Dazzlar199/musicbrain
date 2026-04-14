@@ -18,6 +18,8 @@ import Demos from "./pages/Demos";
 import ComparePage from "./pages/Compare";
 import Rights from "./pages/Rights";
 import Buzz from "./pages/Buzz";
+import PlaylistTracker from "./pages/PlaylistTracker";
+import ReleaseTiming from "./pages/ReleaseTiming";
 
 function Home() {
   // 이미 사용한 적 있으면 바로 스튜디오로
@@ -46,6 +48,8 @@ export default function App() {
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/rights" element={<Rights />} />
           <Route path="/buzz" element={<Buzz />} />
+          <Route path="/playlists" element={<PlaylistTracker />} />
+          <Route path="/release-timing" element={<ReleaseTiming />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />

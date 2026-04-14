@@ -153,13 +153,15 @@ export function Nav({ nav, active }: { nav: ReturnType<typeof useNavigate>; acti
     { label: "분석", items: [
       { key: "studio", label: "곡 분석", path: "/studio" },
       { key: "buzz", label: "팬덤 버즈", path: "/buzz" },
-      { key: "demos", label: "데모 관리", path: "/demos" },
+      { key: "playlists", label: "플레이리스트", path: "/playlists" },
+      { key: "timing", label: "릴리스 타이밍", path: "/release-timing" },
       { key: "trends", label: "차트·트렌드", path: "/trends" },
     ]},
     { label: "운영", items: [
       { key: "artists", label: "아티스트", path: "/artists" },
       { key: "projects", label: "프로젝트", path: "/projects" },
       { key: "campaigns", label: "캠페인", path: "/campaigns" },
+      { key: "demos", label: "데모 관리", path: "/demos" },
     ]},
     { label: "관리", items: [
       { key: "rights", label: "저작권·계약", path: "/rights" },
