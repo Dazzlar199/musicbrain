@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Edit2, ExternalLink, Music, Users, Star } from "lucide-react";
+import { ArrowLeft, Edit2, ExternalLink, Music, Users, Star, TrendingUp, MessageCircle, Newspaper, PlayCircle, ListMusic, Activity } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Nav } from "./Artists";
 
@@ -31,6 +31,9 @@ export default function ArtistDetail() {
   const [form, setForm] = useState<Partial<ArtistFull>>({});
   const [news, setNews] = useState<Array<{title: string; link: string; source: string; date: string; description: string}>>([]);
   const [crawlLoading, setCrawlLoading] = useState(false);
+  const [buzz, setBuzz] = useState<any>(null);
+  const [buzzLoading, setBuzzLoading] = useState(false);
+  const [playlists, setPlaylists] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -42,13 +45,26 @@ export default function ArtistDetail() {
     if (!artist) return;
     const q = artist.stage_name || artist.name;
     setCrawlLoading(true);
+    setBuzzLoading(true);
 
-    // 검색어에 장르/타입 추가해서 정확도 높이기
+    // 뉴스 크롤링
     const newsQuery = `${q} ${artist.genre || ''} ${artist.artist_type === 'group' ? '그룹' : artist.artist_type === 'solo' ? '가수' : ''}`.trim();
     fetch(`/api/crawl/naver-news?query=${encodeURIComponent(newsQuery)}&count=8`)
       .then(r => r.json())
       .then(d => { setNews(d.articles || []); setCrawlLoading(false); })
       .catch(() => setCrawlLoading(false));
+
+    // 버즈 데이터 (X, Reddit, YouTube, Trends)
+    fetch(`/api/buzz/${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(d => { setBuzz(d); setBuzzLoading(false); })
+      .catch(() => setBuzzLoading(false));
+
+    // 플레이리스트 배치
+    fetch(`/api/playlists/scan/${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(setPlaylists)
+      .catch(() => {});
   }, [artist]);
 
   const handleSave = async () => {
@@ -94,38 +110,23 @@ export default function ArtistDetail() {
           </button>
         </div>
 
-        {/* KPI Cards — 소속/관심에 따라 다른 지표 */}
+        {/* KPI Cards */}
         <div className="kpi-grid" style={{ marginBottom: 24 }}>
-          {isRoster ? (
-            <>
-              <div className="kpi-card">
-                <Music size={20} className="kpi-icon" />
-                <div><span>등록 트랙</span><strong>{artist.track_count}</strong></div>
-              </div>
-              <div className="kpi-card">
-                <Star size={20} className="kpi-icon" style={{ color: "#8b5cf6" }} />
-                <div><span>프로젝트</span><strong>{artist.project_count}</strong></div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="kpi-card">
-                <div style={{ width: 20, height: 20, background: "#3182f6", borderRadius: 4 }} />
-                <div><span>최신 뉴스</span><strong>{news.length}건</strong></div>
-              </div>
-              <div className="kpi-card">
-                <div style={{ width: 20, height: 20, background: "#8b5cf6", borderRadius: 4 }} />
-                <div><span>시장</span><strong>{artist.market?.toUpperCase()}</strong></div>
-              </div>
-            </>
-          )}
           <div className="kpi-card">
-            <div style={{ width: 20, height: 20, background: "#1db954", borderRadius: 4 }} />
-            <div><span>Spotify</span><strong style={{ fontSize: 13 }}>{artist.spotify_id ? "연동됨" : "미연동"}</strong></div>
+            <Activity size={20} className="kpi-icon" style={{ color: buzz?.score >= 50 ? "#22c55e" : "#3182f6" }} />
+            <div><span>버즈 스코어</span><strong>{buzz?.score ?? "..."}</strong></div>
           </div>
           <div className="kpi-card">
-            <div style={{ width: 20, height: 20, background: "#e1306c", borderRadius: 4 }} />
-            <div><span>Instagram</span><strong style={{ fontSize: 13 }}>{artist.instagram_handle || "미연동"}</strong></div>
+            <Newspaper size={20} className="kpi-icon" style={{ color: "#3182f6" }} />
+            <div><span>최신 뉴스</span><strong>{news.length}건</strong></div>
+          </div>
+          <div className="kpi-card">
+            <ListMusic size={20} className="kpi-icon" style={{ color: "#8b5cf6" }} />
+            <div><span>플레이리스트</span><strong>{playlists?.count ?? "..."}</strong></div>
+          </div>
+          <div className="kpi-card">
+            <MessageCircle size={20} className="kpi-icon" style={{ color: "#1da1f2" }} />
+            <div><span>X 트윗</span><strong>{buzz?.x?.count ?? "..."}</strong></div>
           </div>
         </div>
 
@@ -227,7 +228,110 @@ export default function ArtistDetail() {
           </div>
         )}
 
-        {crawlLoading && (
+        {/* 버즈 요약 */}
+        {buzz?.summary && (
+          <div className="chart-card" style={{ marginBottom: 24, borderLeft: "3px solid #1da1f2" }}>
+            <p className="chart-title">팬덤 버즈 요약</p>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.8 }}>{buzz.summary}</p>
+          </div>
+        )}
+
+        {/* X 트윗 + Reddit */}
+        <div className="card-grid-2" style={{ marginBottom: 24 }}>
+          {/* X 트윗 */}
+          {buzz?.x?.available && (
+            <div className="chart-card">
+              <p className="chart-title">X (트위터) 실시간</p>
+              {buzz.x.source === "gemini" && buzz.x.hashtags?.length > 0 && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                  {buzz.x.hashtags.map((h: string, i: number) => (
+                    <span key={i} className="status-badge status-active" style={{ fontSize: 10 }}>{h}</span>
+                  ))}
+                </div>
+              )}
+              {buzz.x.source === "gemini" && buzz.x.summary && (
+                <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--text-secondary)" }}>{buzz.x.summary}</p>
+              )}
+              {buzz.x.source === "x_live" && buzz.x.tweets?.slice(0, 5).map((t: any, i: number) => (
+                <a key={i} href={t.url} target="_blank" rel="noreferrer"
+                  style={{ display: "block", padding: "8px 0", borderBottom: "1px solid var(--border-light)", textDecoration: "none", color: "inherit" }}>
+                  <p style={{ fontSize: 13, margin: "0 0 2px" }}>{t.text?.slice(0, 100)}</p>
+                  <span style={{ fontSize: 11, color: "var(--text-disabled)" }}>{t.user} · ♡{t.likes} ↻{t.retweets}</span>
+                </a>
+              ))}
+              {buzz.x.trending_topics?.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <p style={{ fontSize: 11, color: "var(--text-disabled)", marginBottom: 4 }}>화제 토픽</p>
+                  {buzz.x.trending_topics.map((t: string, i: number) => (
+                    <p key={i} style={{ fontSize: 12, margin: "2px 0", paddingLeft: 8, borderLeft: "2px solid var(--blue)" }}>{t}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reddit */}
+          {buzz?.reddit?.posts?.length > 0 && (
+            <div className="chart-card">
+              <p className="chart-title">Reddit</p>
+              {buzz.reddit.top_subreddits?.length > 0 && (
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+                  {buzz.reddit.top_subreddits.map((s: any) => (
+                    <span key={s.name} className="label-badge" style={{ fontSize: 10 }}>r/{s.name}</span>
+                  ))}
+                </div>
+              )}
+              {buzz.reddit.posts.slice(0, 5).map((p: any, i: number) => (
+                <a key={i} href={p.url} target="_blank" rel="noreferrer"
+                  style={{ display: "block", padding: "6px 0", borderBottom: "1px solid var(--border-light)", textDecoration: "none", color: "inherit" }}>
+                  <p style={{ fontSize: 13, margin: 0, lineHeight: 1.4 }}>{p.title?.slice(0, 80)}</p>
+                  <span style={{ fontSize: 11, color: "var(--text-disabled)" }}>↑{p.score} · {p.comments}댓글</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 플레이리스트 배치 */}
+        {playlists?.placements?.length > 0 && (
+          <div className="chart-card" style={{ marginBottom: 24 }}>
+            <p className="chart-title">Spotify 플레이리스트 배치 ({playlists.count}개)</p>
+            <div style={{ display: "grid", gap: 6 }}>
+              {playlists.placements.map((p: any, i: number) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid var(--border-light)" }}>
+                  <div>
+                    <strong style={{ fontSize: 13 }}>{p.playlist_name}</strong>
+                    <span style={{ fontSize: 12, color: "var(--text-tertiary)", marginLeft: 8 }}>{p.track}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ fontSize: 12, color: "var(--text-disabled)" }}>#{p.position}</span>
+                    <span className={`status-badge ${p.type === "editorial" ? "status-active" : "status-discovered"}`} style={{ fontSize: 10 }}>
+                      {p.type === "editorial" ? "에디토리얼" : "차트"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* YouTube */}
+        {buzz?.youtube?.videos?.length > 0 && (
+          <div className="chart-card" style={{ marginBottom: 24 }}>
+            <p className="chart-title">YouTube 최신 영상</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {buzz.youtube.videos.slice(0, 4).map((v: any, i: number) => (
+                <a key={i} href={v.url} target="_blank" rel="noreferrer"
+                  style={{ display: "block", padding: 10, border: "1px solid var(--border-light)", borderRadius: 8, textDecoration: "none", color: "inherit" }}>
+                  <p style={{ fontSize: 13, margin: "0 0 4px", fontWeight: 500, lineHeight: 1.4 }}>{v.title?.slice(0, 50)}</p>
+                  <span style={{ fontSize: 11, color: "var(--text-disabled)" }}>{v.channel} · {v.views}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(crawlLoading || buzzLoading) && (
           <div style={{ textAlign: "center", padding: 20, color: "var(--text-disabled)" }}>
             <div className="loading-orb" style={{ margin: "0 auto 12px" }} />
             정보 수집 중...
